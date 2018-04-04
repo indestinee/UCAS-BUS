@@ -8,18 +8,10 @@ touchdir(html_path)
 
 spider = Spider()
 
-def success_judge(response):
+def success_judge(response):# {{{
     response.encoding = 'utf-8'
     return '你好' in response.text
-
-
-
-while not spider.login('http://payment.ucas.ac.cn/NetWorkUI/fontuserLogin', \
-        success_judge, 'http://payment.ucas.ac.cn/NetWorkUI/authImage'):
-    print('[ERR] failed to login please check username, password and certcode')
-
-spider.download('bus.html', 'http://payment.ucas.ac.cn/NetWorkUI/reservedBus514R001')
-
+# }}}
 def first_step():# {{{ 
     #   first step is useless for advanced user, if you didn't know which routecode, 
     #   you can see elements from website
@@ -85,7 +77,7 @@ def fouth_step():# {{{
     return response
 # }}}
 def fifth_step(urlcode):# {{{
-    data = {
+    data = 
         'msgCode': 'SUCCESS',
         'weixinMessage': '??',
         'urlCode': urlcode,
@@ -101,12 +93,25 @@ def fifth_step(urlcode):# {{{
     return response
 # }}}
 
-response = second_step()
-information = response.json()
-ret = information['returncode']
-print('[LOG] server return code:', ret)
-if ret == 'SUCCESS':
-    third_step()
-    response = fouth_step()
-    urlcode = re.compile('toUtf8(.*?);').findall(response.text)[0][2:-2]
-    fifth_step(urlcode)
+while not spider.login('http://payment.ucas.ac.cn/NetWorkUI/fontuserLogin', \
+        success_judge, 'http://payment.ucas.ac.cn/NetWorkUI/authImage'):
+    print('[ERR] failed to login please check username, password and certcode')
+
+spider.download('bus.html', 'http://payment.ucas.ac.cn/NetWorkUI/reservedBus514R001')
+
+while True:
+    try:
+        response = second_step()
+        information = response.json()
+        ret = information['returncode']
+        print('[LOG] server return code:', ret)
+        if ret == 'SUCCESS':
+            third_step()
+            response = fouth_step()
+            urlcode = re.compile('toUtf8(.*?);').findall(response.text)[0][2:-2]
+            fifth_step(urlcode)
+        break
+    except:
+        print('[ERR] failed to book, re-run.')
+        pass
+
