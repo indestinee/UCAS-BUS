@@ -77,7 +77,7 @@ def fouth_step():# {{{
     return response
 # }}}
 def fifth_step(urlcode):# {{{
-    data = 
+    data = {
         'msgCode': 'SUCCESS',
         'weixinMessage': '??',
         'urlCode': urlcode,
