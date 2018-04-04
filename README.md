@@ -1,5 +1,7 @@
 #semi-automatic bus tickets of UCAS ordering
-This scripts are only coded for sharing knowledge 'how to write a spider/crawl' to a real website. All codes are only for learning.
+This project is only coded for sharing knowledge 'how to write a spider/crawl' to a real website. All codes are only for learning.  
+##details
+website: http://payment.ucas.ac.cn/NetWorkUI/slogin.html
 ##running screen shots
 
 ##prepare
