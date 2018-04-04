@@ -41,7 +41,7 @@ def second_step():# {{{
     data = {
         'routecode': '0020',            #   You need change
         'payAmt': '6.00',
-        'bookingdate': '2018-04-06',    #   You need change
+        'bookingdate': '2018-04-07',    #   You need change
         'payProjectId': '4',        
         'tel': tel,
         'factorycode': 'R001',
@@ -110,6 +110,8 @@ while True:
             response = fouth_step()
             urlcode = re.compile('toUtf8(.*?);').findall(response.text)[0][2:-2]
             fifth_step(urlcode)
+        else:
+            print('[LOG] full return', information)
         break
     except:
         print('[ERR] failed to book, re-run.')
