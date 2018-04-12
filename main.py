@@ -39,9 +39,9 @@ def second_step():# {{{
         tel = input('[I N] phone number: ')
         phone_cache.save(tel, 'tel')
     data = {
-        'routecode': '0020',            #   You need change
+        'routecode': '0015',            #   You need change
         'payAmt': '6.00',
-        'bookingdate': '2018-04-07',    #   You need change
+        'bookingdate': '2018-04-15',    #   You need change
         'payProjectId': '4',        
         'tel': tel,
         'factorycode': 'R001',
@@ -74,6 +74,7 @@ def fouth_step():# {{{
     print('[LOG] step 4, getting from', url)
     response = spider.get(url)
     spider.html_save(response, 'fouth_step.html')
+    print('[OPT] please open the website shown above to pay the ticket! remembet to login before open.')
     return response
 # }}}
 def fifth_step(urlcode):# {{{
