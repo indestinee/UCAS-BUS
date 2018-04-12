@@ -26,7 +26,7 @@ When/After you run, there will be some cache files and user information in files
 1. python3 main.py # or make 
 2. input everything it requires, when it shows '[I N]'.
 ![image]("https://github.com/indestinee/semi-automatic-bus-tickets-of-UCAS-ordering/raw/master/pics/1.png")
-3. after the 5-th step, you will receive a long url $URL.
+3. after the 4/5-th step (sometimes 5-th does not work, but 4-th can), you will receive a long url $URL.
 4. login in your browser first, then open $URL in step 3.
 5. you can see you have one order in buying status.
 ![image]("https://github.com/indestinee/semi-automatic-bus-tickets-of-UCAS-ordering/raw/master/pics/2.png")
