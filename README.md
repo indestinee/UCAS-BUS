@@ -9,7 +9,7 @@ website: http://payment.ucas.ac.cn/NetWorkUI/slogin.html
 ## prepare
 ```
 1. Python3 environment in your computer. 
-2. Make a soft link from crawl2 to crawl. 
+2. $ make install # if you have make in your os or follow Makefile/install:
 ```
 
 ## WARNING
