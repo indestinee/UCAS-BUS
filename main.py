@@ -42,7 +42,7 @@ def first_step():# {{{
     return response
 # }}}
 def second_step():# {{{
-    phone_cache = Cache('./data')
+    phone_cache = Cache(args.user)
     tel = phone_cache.load('tel')
     if not tel:
         tel = input('[I N] phone number: ')
