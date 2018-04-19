@@ -2,6 +2,15 @@ from crawl.spider import *
 from crawl.utils import *
 from IPython import embed
 
+import argparse
+def get_args():
+    parser = argparse.ArgumentParser(description='UCAS_BUS')
+    parser.add_argument('-u', '--user', default='./data')
+    args = parser.parse_args()
+    return args
+
+args = get_args()
+
 cache = Cache('./cache')
 html_path = 'html_cache'
 touchdir(html_path)
@@ -41,7 +50,7 @@ def second_step():# {{{
     data = {
         'routecode': '0015',            #   You need change
         'payAmt': '6.00',
-        'bookingdate': '2018-04-15',    #   You need change
+        'bookingdate': '2018-04-22',    #   You need change
         'payProjectId': '4',        
         'tel': tel,
         'factorycode': 'R001',
@@ -68,9 +77,8 @@ def third_step():# {{{
     return response
 # }}}
 def fouth_step():# {{{
-    url = 'http://payment.ucas.ac.cn/NetWorkUI/weixinPayAction?orderno=%s'%\
-            information['payOrderTrade']['orderno']
-
+    url = 'http://payment.ucas.ac.cn/NetWorkUI/weixinPayAction?orderno=%s'\
+            %information['payOrderTrade']['orderno']
     print('[LOG] step 4, getting from', url)
     response = spider.get(url)
     spider.html_save(response, 'fouth_step.html')
@@ -94,11 +102,12 @@ def fifth_step(urlcode):# {{{
     return response
 # }}}
 
-while not spider.login('http://payment.ucas.ac.cn/NetWorkUI/fontuserLogin', \
-        success_judge, 'http://payment.ucas.ac.cn/NetWorkUI/authImage'):
+while not spider.login(
+        'http://payment.ucas.ac.cn/NetWorkUI/fontuserLogin', 
+        success_judge, 'http://payment.ucas.ac.cn/NetWorkUI/authImage',
+        cache_name=args.user
+    ):
     print('[ERR] failed to login please check username, password and certcode')
-
-spider.download('bus.html', 'http://payment.ucas.ac.cn/NetWorkUI/reservedBus514R001')
 
 while True:
     try:
@@ -109,7 +118,8 @@ while True:
         if ret == 'SUCCESS':
             third_step()
             response = fouth_step()
-            urlcode = re.compile('toUtf8(.*?);').findall(response.text)[0][2:-2]
+            urlcode = re.compile('toUtf8(.*?);').\
+                    findall(response.text)[0][2:-2]
             fifth_step(urlcode)
         else:
             print('[LOG] full return', information)

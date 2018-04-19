@@ -3,3 +3,4 @@ crawl
 data
 *cache*
 *swp
+Makefile
