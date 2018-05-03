@@ -43,7 +43,7 @@ After you run, there will be some cache files and user information in files, lik
 
 You can done all above within 10 secs after tickets online if you prepare well. 
 (login first, choose wait until next hour, fix delta of local and server time, and finish 6 first.)
-One more thing, I didn't test whether the ttl of cookies, so don't login too early before 18:00.
+One more thing, I didn't test how long the ttl of cookies is, so don't login too early before 18:00.
 good luck!
 ```
 
