@@ -3,6 +3,7 @@ from crawl2.utils import *
 import time, os
 import argparse
 
+delta = 90 - 8 # delta of local time and server time
 
 user_save_file = 'data'
 
@@ -193,7 +194,7 @@ if choice == 'y':
     # print('[LOG] the following buying is a test..')
     # buy()
     print('[LOG] the real one is starting soon..')
-    t = (3600 - int(time.time()) % 3600) + 90 - 8
+    t = (3600 - int(time.time()) % 3600) + delta
     print('[LOG] sleep for %d secs' % t)
     print('[WRN] DO NOT login too early before system opens, there may be a time limit for COOCKIES!')
     time.sleep(t)
