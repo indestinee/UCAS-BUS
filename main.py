@@ -111,7 +111,7 @@ while not spider.login(
     ):
     print('[ERR] failed to login please check username, password and certcode')
 
-t = (3600 - int(time.time()) % 3600) + 90 - 900
+t = (3600 - int(time.time()) % 3600) + 90
 print('[LOG] sleep for %d secs' % t)
 time.sleep(t)
 
