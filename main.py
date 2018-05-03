@@ -3,11 +3,13 @@ from crawl2.utils import *
 import time, os
 import argparse
 
+
 user_save_file = 'data'
 
 def get_args():
     parser = argparse.ArgumentParser(description='UCAS_BUS')
     parser.add_argument('-u', '--user', default='default')
+    parser.add_argument('-a', '--anonymous', action='store_true', default=False)
     args = parser.parse_args()
     return args
 
@@ -69,7 +71,8 @@ def third_step(information):# {{{
 def fouth_step(information):# {{{
     url='http://payment.ucas.ac.cn/NetWorkUI/weixinPayAction?orderno=%s'\
             %information['payOrderTrade']['orderno']
-    print('[LOG] step 4, getting from', url)
+    if not args.anonymous:
+        print('[LOG] step 4, getting from', url)
     response = spider.get(url)
     spider.html_save(response, 'fouth_step.html')
     print('[OPT] please open the website shown above to pay the ticket! remembet to login before open.')
@@ -84,7 +87,8 @@ def fifth_step(urlcode):# {{{
     }
     url = 'http://payment.ucas.ac.cn/NetWorkUI/weiXinQRCode?'
     for key, value in data.items():
-        url = url + key + '=' + value + '&'
+        url = url + key + '=' + \
+                (value if not args.anonymous else 'anonymous') + '&'
     print('[LOG] step 5, getting from', url)
     print('[OPT] please open the website shown above to pay the ticket! remembet to login before open.')
     # response = spider.get(url)
@@ -99,7 +103,7 @@ user_file = os.path.join(user_save_file, args.user)
 while not spider.login(
         'http://payment.ucas.ac.cn/NetWorkUI/fontuserLogin', 
         success_judge, 'http://payment.ucas.ac.cn/NetWorkUI/authImage',
-        cache_name=user_file
+        user_file, args.anonymous
     ):
     print('[ERR] failed to login please check username, password and certcode')
 
@@ -162,7 +166,7 @@ print('[LOG] confirm route:')
 print('  name: {}, time: {}, code: {}'.format(cache.route['routename'],\
         cache.route['routetime'], cache.route['routecode']))
 
-choice = input('[I N] sleep for the next new hour? [y/n] (default n): ').\
+choice = input('[I N] sleep until next new hour? [y/n] (default n): ').\
         lower()
 
 def buy():
