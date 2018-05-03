@@ -1,8 +1,9 @@
 from crawl.spider import *
 from crawl.utils import *
 from IPython import embed
-
+import time
 import argparse
+
 def get_args():
     parser = argparse.ArgumentParser(description='UCAS_BUS')
     parser.add_argument('-u', '--user', default='./data')
@@ -50,11 +51,12 @@ def second_step():# {{{
     data = {
         'routecode': '0015',            #   You need change
         'payAmt': '6.00',
-        'bookingdate': '2018-04-22',    #   You need change
+        'bookingdate': '2018-05-06',    #   You need change
         'payProjectId': '4',        
         'tel': tel,
         'factorycode': 'R001',
     }
+    print(data)
     url = 'http://payment.ucas.ac.cn/NetWorkUI/reservedBusCreateOrder'
     print('[LOG] step 2, posting to', url)
     response = spider.post(url, data)
@@ -108,6 +110,10 @@ while not spider.login(
         cache_name=args.user
     ):
     print('[ERR] failed to login please check username, password and certcode')
+
+t = (3600 - int(time.time()) % 3600) + 90 - 900
+print('[LOG] sleep for %d secs' % t)
+time.sleep(t)
 
 while True:
     try:
