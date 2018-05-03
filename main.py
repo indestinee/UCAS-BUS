@@ -1,7 +1,6 @@
 from crawl.spider import *
 from crawl.utils import *
-from IPython import embed
-import time
+import time, os
 import argparse
 
 def get_args():
@@ -91,14 +90,16 @@ def fifth_step(urlcode):# {{{
     return response
 # }}}
 
+user_file = os.path.join('data', args.user)
+
 while not spider.login(
         'http://payment.ucas.ac.cn/NetWorkUI/fontuserLogin', 
         success_judge, 'http://payment.ucas.ac.cn/NetWorkUI/authImage',
-        cache_name=args.user
+        cache_name=user_file
     ):
     print('[ERR] failed to login please check username, password and certcode')
 
-user_cache = Cache(args.user)
+user_cache = Cache(user_filer)
 
 cache.date = cache.load('date')
 date = input('[I N] date (yyyy-mm-dd) [default %s]: ' % cache.date)
