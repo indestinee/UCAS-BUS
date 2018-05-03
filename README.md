@@ -30,14 +30,14 @@ After you run, there will be some cache files and user information in files, lik
 ## how to run
 ```
 1. $ python3 main.py -user [nickname] # run in shell
-2. input everything it requires, when it shows '[I N]'.
+2. input everything it requires, when it shows '[I N]'. (username: student identification, password: last 6 letters in identity card)
 3. select the date, none for default.
 4. select bus id, none for default (if you change date, you'd better re-select bus id).
 5. after the 4/5-th step, you will receive a long url $URL. (use 4-th when 5-th did't work otherwise 5-th)
-6. login in your browser first, then open $URL in step 5.
-7. scan the QR code. and pay with Wechat. and some minutes later, the status will turn from buying to done.
+6. login http://payment.ucas.ac.cn/NetWorkUI/slogin.html in your browser first, then open $URL in step 5.
+7. scan the QR code. and pay with Wechat. and some minutes later, the status will turn to done from buying.
 ```
 
 ## knowledge of crawl/spider
-google/baidu it or read some <a href='http://docs.python-requests.org/zh_CN/latest/user/quickstart.html'>python-request docs</a>
-submodule <a href'https://github.com/indestinee/crawl2'>crawl2</a>
+google/baidu it or read some <a href='http://docs.python-requests.org/zh_CN/latest/user/quickstart.html'>python-request docs</a>  
+submodule <a href='https://github.com/indestinee/crawl2'>crawl2</a>
