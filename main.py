@@ -13,6 +13,7 @@ def get_args():
 args = get_args()
 
 cache = Cache('./cache')
+
 html_path = 'html_cache'
 touchdir(html_path)
 
@@ -23,37 +24,23 @@ def success_judge(response):# {{{
     return '你好' in response.text
 # }}}
 def first_step():# {{{ 
-    #   first step is useless for advanced user, if you didn't know which routecode, 
-    #   you can see elements from website
-    data = {
-        'carno': '0020',
-        'payProjectId': '4',
-        'factorycode': 'R001',
-        'payamtstr': '6.00',
-        'freeseat': '37',
-        'routecode': '0020',
-        'bookingdate': '2018-04-06',
-        'routeName': '雁栖湖—玉泉路15:40（节假日）',
-        'payAmt': '6.00',
-    }
-    url = 'http://payment.ucas.ac.cn/NetWorkUI/openReservedBusInfoConfirm'
+    url = 'http://payment.ucas.ac.cn/NetWorkUI/queryBusByDate'
     print('[LOG] posting to', url)
+    data = {
+        'bookingdate': cache.date,
+        'factorycode': 'R001',
+    }
     response = spider.post(url, data)
     spider.html_save(response, 'first_step.html')
     return response
 # }}}
 def second_step():# {{{
-    phone_cache = Cache(args.user)
-    tel = phone_cache.load('tel')
-    if not tel:
-        tel = input('[I N] phone number: ')
-        phone_cache.save(tel, 'tel')
     data = {
         'routecode': '0015',            #   You need change
         'payAmt': '6.00',
         'bookingdate': '2018-05-06',    #   You need change
         'payProjectId': '4',        
-        'tel': tel,
+        'tel': user_cache.tel,
         'factorycode': 'R001',
     }
     print(data)
@@ -111,8 +98,48 @@ while not spider.login(
     ):
     print('[ERR] failed to login please check username, password and certcode')
 
+user_cache = Cache(args.user)
+
+cache.date = cache.load('date')
+date = input('[I N] date (yyyy-mm-dd) [default %s]: ' % cache.date)
+if date:
+    try:
+        t = date.replace('/', '-').split('-')
+        cache.date = '%04d-%02d-%02d'%(t[0], t[1], t[2])
+    except:
+        print('[ERR] Wrong format!!!')
+
+cache.route = cache.load('route')
+print('[LOG] default route: {}'.format(cache.route))
+def route():
+    choice = input('[I N] new route? [y/n] (default n): ').tolower()
+    if choice == 'n' or not choice:
+        return cache.route
+    elif choice == 'y':
+        try:
+            response = first_step.json()
+            print('[LOG] query return code', response['returncode'])
+            print('----    ----    choose route    ----    ----')
+            route_list = response['routelist']
+            for i, route in enumerate(route_list):
+                print('  [SEL] [{}] {}'.format(i, route))
+            choice = int(input('[I N] ID: '))
+            return route_list[choice]
+            print('----    ----    route selected    ----    ----')
+        except:
+            print('[ERR] getting route failed..')
+            return None
+
+while True:
+    route = route()
+    if route:
+        cache.route = route
+        cache.save(route, 'route')
+        break
+
 t = (3600 - int(time.time()) % 3600) + 90
 print('[LOG] sleep for %d secs' % t)
+print('[WRN] DO NOT login too early before system opens, there may be a time limit for COOCKIES!')
 time.sleep(t)
 
 while True:
