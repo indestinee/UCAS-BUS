@@ -4,7 +4,6 @@ all:
 install:
 	git submodule init
 	git submodule update
-	ln -s crawl2 crawl
 
 clean:
 	rm -rf *cache

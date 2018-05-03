@@ -1,38 +1,43 @@
 # semi-automatic bus tickets of UCAS ordering
-This project is only coded for sharing knowledge 'how to write a spider/crawl' to a real website. All codes are only for learning.  
+This project is only coded for sharing knowledge 'how to write a spider/crawl' to a real website. All codes are only for learning, like how to login and post a chart, etc.
+## Website
+<a href='http://payment.ucas.ac.cn/NetWorkUI/slogin.html'>target</a>
 
-## details
-website: http://payment.ucas.ac.cn/NetWorkUI/slogin.html
-
-## running screen shots
-
-## prepare
-```
-1. Python3 environment in your computer. 
-2. $ make install # if you have make in your os or follow Makefile/install:
-```
-
-## WARNING
-When/After you run, there will be some cache files and user information in files, like \*cache and data.  
-**'NEVER GIVE ANYONE ANY OF THOSE CACHE FILES!!!'**
+## running examples
+watch <a href='https://raw.githubusercontent.com/indestinee/semi-automatic-bus-tickets-of-UCAS-ordering/master/sample.mov'>sample.mov</a> for details
 
 ## requirement
 ```
-1. python3 and evironment
-2. opencv in python3 (it does not matter if you dont have. but you have to open picture of cert code on your own.)
+1. Python3 environment. # must
+2. git # to set submodule
+3. make # if you need to use cmd in Makefile
+4. opencv # to show certcode
+
+(1) must be satisfied.
 ```
 
+## before you run
+```
+$ git submodule init
+$ git submodule update
+# if you don't have git, download https://github.com/indestinee/crawl2 to crawl2/
+```
+
+## **WARNING**
+After you run, there will be some cache files and user information in files, like \*cache and data.  
+**'NEVER GIVE ANYONE ANY OF THOSE CACHE FILES!!!'**
+
 ## how to run
-1. python3 main.py # or make 
+```
+1. $ python3 main.py -user [nickname] # run in shell
 2. input everything it requires, when it shows '[I N]'.
-![image]("https://github.com/indestinee/semi-automatic-bus-tickets-of-UCAS-ordering/raw/master/pics/1.png")
-3. after the 4/5-th step (sometimes 5-th does not work, but 4-th can), you will receive a long url $URL.
-4. login in your browser first, then open $URL in step 3.
-5. you can see you have one order in buying status.
-![image]("https://github.com/indestinee/semi-automatic-bus-tickets-of-UCAS-ordering/raw/master/pics/2.png")
-6. scan the QR code. and pay with Wechat. and some minutes later, the status will turn to done.
-![image]("https://github.com/indestinee/semi-automatic-bus-tickets-of-UCAS-ordering/raw/master/pics/3.png")
-![image]("https://github.com/indestinee/semi-automatic-bus-tickets-of-UCAS-ordering/raw/master/pics/4.png")
+3. select the date, none for default.
+4. select bus id, none for default (if you change date, you'd better re-select bus id).
+5. after the 4/5-th step, you will receive a long url $URL. (use 4-th when 5-th did't work otherwise 5-th)
+6. login in your browser first, then open $URL in step 5.
+7. scan the QR code. and pay with Wechat. and some minutes later, the status will turn from buying to done.
+```
 
 ## knowledge of crawl/spider
 google/baidu it or read some <a href='http://docs.python-requests.org/zh_CN/latest/user/quickstart.html'>python-request docs</a>
+submodule <a href'https://github.com/indestinee/crawl2'>crawl2</a>
