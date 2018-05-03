@@ -4,7 +4,7 @@ This project is only coded for sharing knowledge 'how to write a spider/crawl' t
 <a href='http://payment.ucas.ac.cn/NetWorkUI/slogin.html'>target</a>
 
 ## running examples
-watch <a href='https://raw.githubusercontent.com/indestinee/semi-automatic-bus-tickets-of-UCAS-ordering/master/sample.mov'>sample.mov</a> for details
+watch <a href='https://github.com/indestinee/semi-automatic-bus-tickets-of-UCAS-ordering/blob/master/sample.mov?raw=true'>sample.mov</a> for details
 
 ## requirement
 ```
