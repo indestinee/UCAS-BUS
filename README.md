@@ -27,6 +27,11 @@ $ git submodule update
 After you run, there will be some cache files and user information in files, like \*cache and data.  
 **'NEVER GIVE ANYONE ANY OF THOSE CACHE FILES!!!'**
 
+## **NEW VERSION**
+```
+    you don't need to open url in step 5, only open html in step 6.
+    which is saved in local!
+```
 ## run
 ```
 1.  $ python3 main.py -user [nickname] # run in shell

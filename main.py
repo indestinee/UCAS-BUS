@@ -2,6 +2,7 @@ from crawl2.spider import *
 from crawl2.utils import *
 import time, os
 import argparse
+# from IPython import embed
 
 delta = 90 - 8 # delta of local time and server time
 
@@ -92,8 +93,14 @@ def fifth_step(urlcode):# {{{
                 (value if not args.anonymous else 'anonymous') + '&'
     print('[LOG] step 5, getting from', url)
     print('[OPT] please open the website shown above to pay the ticket! remembet to login before open.')
-    # response = spider.get(url)
-    # spider.html_save(response, 'fifth_step.html')
+    response = spider.get(url)
+    response.encoding = 'utf-8'
+    text = response.text.replace('src="/Network', 'src="http://payment.ucas.ac.cn/Network')
+    file_name = 'html_save/%s.html' % args.user
+    with open(file_name, 'w') as f:
+        f.write(text)
+
+    print('[SUC] step 6, open %s in your website!' % file_name)
     # return response
 # }}}
 
@@ -202,3 +209,5 @@ if choice == 'y':
         
 while not buy():
     time.sleep(1)
+
+# embed()
