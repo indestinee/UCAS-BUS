@@ -95,11 +95,10 @@ def fifth_step(urlcode):# {{{
     print('[OPT] please open the website shown above to pay the ticket! remembet to login before open.')
     response = spider.get(url)
     response.encoding = 'utf-8'
-    text = response.text.replace('src="/Network', 'src="http://payment.ucas.ac.cn/Network')
-    file_name = 'html_save/%s.html' % args.user
+    text = response.text.replace('src="/NetWork', 'src="http://payment.ucas.ac.cn/NetWork')
+    file_name = os.path.join(html_path, '%s.html' % args.user)
     with open(file_name, 'w') as f:
         f.write(text)
-
     print('[SUC] step 6, open %s in your website!' % file_name)
     # return response
 # }}}
