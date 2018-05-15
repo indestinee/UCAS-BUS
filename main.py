@@ -81,8 +81,7 @@ def fifth_step(urlcode):# {{{
     }
     url = 'http://payment.ucas.ac.cn/NetWorkUI/weiXinQRCode?'
     for key, value in data.items():
-        url = url + key + '=' + \
-                (value if not args.anonymous else 'anonymous') + '&'
+        url = url + key + '=' + value + '&'
     print('[LOG] step 5, getting from', url)
     print('[OPT] please open the website shown above to pay the ticket! remembet to login before open.')
     response = spider.get(url)

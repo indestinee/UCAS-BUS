@@ -7,7 +7,7 @@ This project is only coded for sharing knowledge 'how to write a spider/crawl' t
 
 watch <a href='https://github.com/indestinee/semi-automatic-bus-tickets-of-UCAS-ordering/blob/master/web_sample.mov?raw=true'>web_sample.mov</a> for details  
 
-watch <a href='https://github.com/indestinee/semi-automatic-bus-tickets-of-UCAS-ordering/blob/master/sample.mov?raw=true'>bash_run_sample.mov</a> for details
+watch <a href='https://github.com/indestinee/semi-automatic-bus-tickets-of-UCAS-ordering/blob/master/bash_sample.mov?raw=true'>bash_sample.mov</a> for details
 
 ## requirement
 ```
