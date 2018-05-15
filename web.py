@@ -34,8 +34,8 @@ limit = 10
 cnt = {user: 0 for user in users}
 obj = {}
 
-if not args.public:
-    hash_table['123'] = hash_table[hash_func('test')]
+# if not args.public:
+    # hash_table['123'] = hash_table[hash_func('test')]
 
 with open('user_information.txt', 'w') as f:
     for key, value in hash_table.items():
@@ -98,6 +98,7 @@ def main():
             session['wait'] = wait
             session['status'] += 1
             return redirect(url_for('index'))
+        data['current'] = '[LOG] choose one of the following two buttons and press!'
         data['msg'] = ['[LOG] select date: ' + session['date'][-1],\
                 '[LOG] select route: ' + session['route'][-1]]
     elif session['status'] == 4:
