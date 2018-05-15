@@ -1,0 +1,12 @@
+<html>
+    <title>
+        bus ticket
+    </title>
+    <body>
+        <p>Hi, user {{username}}! You have {{cnt}} account(s) online in the same time!
+        <p><a href='/logout'> logout</a>
+        {% if msg %}
+            <h2>{{msg}}!</h2>
+        {% endif %}
+    </body>
+</html>
