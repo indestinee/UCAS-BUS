@@ -139,6 +139,7 @@ if __name__ == '__main__':
 
     if not os.path.isdir(sub_cfg.user_save_file):
         os.mkdir(sub_cfg.user_save_file)
+
     user_file = os.path.join(sub_cfg.user_save_file, args.user)
 
     while not spider.login(
