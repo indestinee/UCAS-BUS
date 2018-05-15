@@ -48,10 +48,12 @@ After you run, there will be some cache files and user information in files, lik
 3.  select the date, none for default.
 4.  select bus id, none for default (if you change date, you'd better re-select bus id).
 ```
-~~5.  after the 4/5-th step, you will receive a long url $URL. ~~
-    ~~(use 4-th when 5-th did't work otherwise 5-th)~~
-~~6.  login http://payment.ucas.ac.cn/NetWorkUI/slogin.html in your browser first,~~
-    ~~then open $URL in step 5.~~
+
+~~5.  after the 4/5-th step, you will receive a long url $URL. ~~  
+    ~~(use 4-th when 5-th did't work otherwise 5-th)~~  
+
+~~6.  login http://payment.ucas.ac.cn/NetWorkUI/slogin.html in your browser first,~~  
+    ~~then open $URL in step 5.~~  
 
 ```
 7.  open the html files in "[LOG] step 6" (in your local)
