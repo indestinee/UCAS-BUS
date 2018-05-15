@@ -34,8 +34,8 @@ limit = 10
 cnt = {user: 0 for user in users}
 obj = {}
 
-# if not args.public:
-    # hash_table['123'] = hash_table[hash_func('test')]
+if not args.public:
+    hash_table['123'] = hash_table[hash_func(users[-1])]
 
 with open('user_information.txt', 'w') as f:
     for key, value in hash_table.items():
@@ -188,4 +188,4 @@ def _login(username=None):
 if __name__ == '__main__':
     host = '0.0.0.0' if args.public else '127.0.0.1'
     app.secret_key = os.urandom(32)
-    app.run(host=host, port=args.port, debug=True)
+    app.run(host=host, port=args.port, debug=True if not args.public else False)
