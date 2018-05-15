@@ -1,0 +1,134 @@
+<html>
+    <title>
+        bus ticket
+    </title>
+    <body>
+        <p>Hi, user {{username}}! You have {{cnt}} account(s) online in the same time!
+        <p>
+        <button onclick="window.location.href='/'">fresh</button> 
+        <button onclick="window.location.href='/previous'">previous</button> 
+        <button onclick="window.location.href='/restart'">restart</button>
+        <button onclick="window.location.href='/logout'"> logout</button>
+        {% if current %}
+            <h1> {{current}}</h1>
+        {% endif %}
+        {% if status == 0 %}
+            <form action="" method="post">
+                <p><a href='/'><img src="{{ url_for('static', filename=certcode_path)}}"></a>
+                &nbsp;&nbsp;<input type=text name=certcode>
+                <p><input type=submit value=Submit>
+            </form>
+        {% elif status == 1 %}
+            <form action="" method="post" id="myform">
+                <select onchange="submitForm();" name="date">
+                {% for date in dates %}
+                    <option value="{{'%s|%s'%(date[0],date[1])}}">{{date[1]}}</option>
+                {% endfor %}
+                </select>
+            </form>
+
+        {% elif status == 2 %}
+            <form action="" method="post" id="myform">
+                <select onchange="submitForm();" name="route">
+                {% for route in route_list %}
+                    <option value="{{'%s|%s'%(route[0], route[1])}}">{{route[1]}}</option>  
+                {% endfor %}
+                </select>
+            </form>
+        {% elif status == 3 %}
+            <p>
+                <button onclick="f(0)">start now</button>
+                <button onclick="f(1)">start in next new hour</button>
+        {% elif status == 4 %}
+            <h4>starting in {{delta}} seconds.. </h4>
+            <meta http-equiv="refresh" content="{{fresh}}">
+        {% elif status == 5 %}
+            <meta http-equiv="refresh" content="1">
+        {% elif status == 6 %}
+            <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+            <script src="http://payment.ucas.ac.cn/NetWorkUI/lib/jQuery 1.11.1.js" type="text/javascript"></script>
+            <script language="javascript" type="text/javascript" src="http://payment.ucas.ac.cn/NetWorkUI/js/jquery.qrcode.min.js"></script>
+            <script type="text/javascript">
+                $(function(){
+                    $("#code").empty();
+                    var msgCode = 'SUCCESS';
+                    var weixinMessage = '??';
+                    var urlCode = toUtf8('{{wechat}}');
+                    if(msgCode == "SUCCESS" && null != urlCode && "" != urlCode){
+                        $("#code").qrcode({
+                            //render:($.browser.msie && $.browser.version < 9 ? "table" : "canvas"),
+                            render:"table",
+                            width: 260,
+                            height:260,
+                            text: urlCode
+                        });
+                    }else{
+                        $("#successDIV").css("display","none");
+                        $("#errorMessage").html(weixinMessage);
+                        $("#errorDiv").css("display","block");
+                    }
+
+                    //var str = toUtf8('??');
+
+                })
+
+                function toUtf8(str) {
+                    var out, i, len, c;
+                    out = "";
+                    len = str.length;
+                    for(i = 0; i < len; i++) {
+                        c = str.charCodeAt(i);
+                        if ((c >= 0x0001) && (c <= 0x007F)) {
+                            out += str.charAt(i);
+                        } else if (c > 0x07FF) {
+                            out += String.fromCharCode(0xE0 | ((c >> 12) & 0x0F));
+                            out += String.fromCharCode(0x80 | ((c >>  6) & 0x3F));
+                            out += String.fromCharCode(0x80 | ((c >>  0) & 0x3F));
+                        } else {
+                            out += String.fromCharCode(0xC0 | ((c >>  6) & 0x1F));
+                            out += String.fromCharCode(0x80 | ((c >>  0) & 0x3F));
+                        }
+                    }
+                    return out;
+                }
+            </script>
+
+        <!--主体 begin-->
+        <div class="content">
+            <div style="margin: 0 auto;width: 990px;height: 450px" id="successDIV">
+                <div style="width: 260px;float: left;margin-top: 80px;margin-left: 150px">
+                    <div id="code" ></div>
+                </div>
+            </div>
+        </div>
+        <!--主体 end-->
+
+        {% endif %}
+
+        {% if msg %}
+            {% for each in msg %}
+                <h3>{{each}}</h3>
+            {% endfor %}
+        {% endif %}
+    </body>
+    <script>
+        function submitForm(){
+            var form = document.getElementById("myform");
+            form.submit();
+        }
+        function f(x) {
+            var form = document.createElement("form");
+            document.body.appendChild(form);
+            form.method = 'post';
+            form.action = '/';
+            form.target = '_self';
+            var newElement = document.createElement("input");
+            newElement.setAttribute("name", "wait");
+            newElement.setAttribute("type", "hidden");
+            newElement.setAttribute("value", x);
+            form.appendChild(newElement);
+            form.submit();
+        }
+    </script>
+</html>
