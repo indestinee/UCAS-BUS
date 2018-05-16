@@ -10,7 +10,7 @@
       <script src="https://cdn.bootcss.com/html5shiv/3.7.3/html5shiv.min.js"></script>
       <script src="https://cdn.bootcss.com/respond.js/1.4.2/respond.min.js"></script>
     <![endif]-->
-    <title> bus ticket </title>
+    <title> Bus Ticket </title>
   </head>
 
   <body>
@@ -29,22 +29,20 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-        <a class="navbar-brand" href="#">Bus ticket</a>
+        <a class="navbar-brand" href="#">Bus Ticket</a>
+        <a class='navbar-brand' href="/undo">Undo</a>
         </div>
 
         <!-- Collect the nav links, forms, and other content for toggling -->
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
           <ul class="nav navbar-nav">
-            <li class="active"><a href="/refresh">refresh<span class="sr-only">(current)</span></a></li>
-            <li><a href="/restart">restart</a></li>
-            <li><a href="/undo">undo</a></li>
-          </ul>
-          <ul class="nav navbar-nav navbar-center">
-            <p class="navbar-text">Hi, <strong>{{username}}</strong>! You have <strong>{{cnt}}</strong> account(s) online.</p>
+            <li><a href="/refresh">Refresh<span class="sr-only">(current)</span></a></li>
+            <li><a href="/restart">Restart</a></li>
+            <!-- <li><a href="/undo">undo</a></li> -->
           </ul>
           <ul class="nav navbar-nav navbar-right">
-            <li><a href="/logout">log out</a></li>
-            <li><a href="/logout_all">log out all</a></li>
+            <li class='active'><a href="/logout">Log Out</a></li>
+            <li><a href="/logout_all">Log Out All</a></li>
           </ul>
         </div><!-- /.navbar-collapse -->
       </div><!-- /.container-fluid -->
@@ -52,15 +50,25 @@
     
 
     <div class="container">
+      {% if status == 0 %}
+      <div class="alert alert-info" role="alert">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span></button>
+        <p align=center> Hi, <strong>{{username}}</strong>! You have <strong>{{cnt}}</strong> account(s) online. </p>
+      </div>
+      {% endif %}
       <div class="jumbotron">
         {% if current %}
-          <h2 align="center"> {{current}}</h2>
+          <div class="row">
+            <h3 align="center"><strong> {{current}}</strong>
+          </div>
         {% endif %}
+        <div class='row'>
         <hr>
         {% if status == 0 %}
           <form class="form-inline" action="" method="post" align="center">
             <div class="form-group">
-              <a href='/'><img src="{{ url_for('static', filename=certcode_path)}}"></a>
+              <a href='/'><img src="{{ url_for('static', filename=certcode_path)}}"></a> 
               <div class="form-group">
                 <input type="text" class="form-control" placeholder="cert code" name="certcode">
               </div>
@@ -77,6 +85,7 @@
               </label>
             </div>          
             {% endfor %}
+            <hr>
             <button type="submit" class="btn btn-default">Submit</button>
           </form>
         {% elif status == 2 %}
@@ -88,26 +97,26 @@
               </label>
             </div>
             {% endfor %}
-            <button type="submit" class="btn btn-default">Submit</button>
+            <hr>
+            <button type="submit" class="btn btn-default" {% if route_list[0][-1] == 'disabled' %} disabled {% endif %}>Submit</button>
           </form>
         {% elif status == 3 %}
           <form action="" method="post" id="time" align='center'>
             <div class="radio">
               <label>
-                <input type="radio" name="time" id="time" value=0 {{t1}}>start right now 
+                <input type="radio" name="time" id="time" value=0 {{t1}}> {{s1}}
               </label>
             </div>
             <div class="radio">
               <label>
-                  <input type="radio" name="time" id="time" value=1 {{t2}}>start at {{next_18_time}}
+                <input type="radio" name="time" id="time" value=1 {{t2}}> {{s2}}
               </label>
             </div>
+            <hr>
             <button type="submit" class="btn btn-default">Submit</button>
           </form>
         {% elif status == 4 %}
           <h4 align='center'>starting in {{eta}} later ...</h4>
-          <br>
-          <h4 align='center'> <a href='/undo'>undo</a></h2>
           <meta http-equiv="refresh" content="{{fresh}}">
         {% elif status == 5 %}
           <meta http-equiv="refresh" content="{{fresh}}">
@@ -171,30 +180,31 @@
           <!--主体 end-->
 
         {% endif %}
-        <br>
-        <hr>
-        <div class="row">
-          <div class="col-md-2"></div>
-          <div class="col-md-8">
-            {% if msg %}
-              {% for each in msg %}
-                {% if each[:5] == '[SUC]' %}
-                  <div class="alert alert-success" role="alert">
-                {% elif each[:5] == '[WRN]' %}
-                  <div class="alert alert-warning" role="alert">
-                {% elif each[:5] == '[ERR]' %}
-                  <div class="alert alert-danger" role="alert">
-                {% else %}
-                  <div class="alert alert-info" role="alert">
-                {% endif %}
-                    <p align='center'> {{each}}</p>
-                  </div>
-              {% endfor %}
-            {% endif %}
-          </div>
-          <div class="col-md-2"></div>
         </div>
       </div>
+      {% if msg %}
+        {% for each in msg %}
+          {% if each[:5] == '[SUC]' %}
+            <div class="alert alert-success" role="alert">
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span></button>
+          {% elif each[:5] == '[WRN]' %}
+            <div class="alert alert-warning" role="alert">
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span></button>
+          {% elif each[:5] == '[ERR]' %}
+            <div class="alert alert-danger" role="alert">
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span></button>
+          {% else %}
+            <div class="alert alert-info" role="alert">
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span></button>
+          {% endif %}
+              <p align='center'> {{each}}</p>
+            </div>
+        {% endfor %}
+      {% endif %}
     </div>
   </body>
 </html>
