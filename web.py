@@ -5,6 +5,10 @@ import re, argparse, os, pickle, time
 from order import Order
 from hash_table import hash_func
 
+limit = 10
+users_path = './data/'
+daydayday = ['星期' + each for each in '一二三四五六日']
+
 def get_web_args():# {{{
     parser = argparse.ArgumentParser(description='bus ticket')
     parser.add_argument('--public', action='store_true', default=False)
@@ -12,9 +16,6 @@ def get_web_args():# {{{
     args = parser.parse_args()
     return args
 # }}}
-daydayday = ['Monday', 'Tuesday', 'Wednesday', \
-        'Thursday', 'Friday', 'Saturday', 'Sunday']
-
 def get_date(delta=0):# {{{
     t = time.localtime(time.time() + delta * 86400)
     s = '%d-%02d-%02d' % (t.tm_year, t.tm_mon, t.tm_mday)
@@ -24,46 +25,46 @@ def get_date(delta=0):# {{{
 
 args = get_web_args()
 app = Flask(__name__, static_folder='static', static_url_path='/static')
-users_save_file = './data'
 
-
-users_path = './data/'
 users = os.listdir(users_path)
-hash_table = {hash_func(user): user for user in users}
-limit = 10
+hash2user = {hash_func(user): user for user in users}
 cnt = {user: 0 for user in users}
-obj = {}
+id2obj = {}
+user2id = {user: set() for user in users}
 
 if not args.public:
-    hash_table['123'] = hash_table[hash_func(users[-1])]
+    hash2user['123'] = hash2user[hash_func(users[-1])]
 
 with open('user_information.txt', 'w') as f:
-    for key, value in hash_table.items():
+    for key, value in hash2user.items():
         f.write('%s: %s\n' % (value, key))
 
 def main():
-    mine = obj[session['id']]
+    try:
+        my_obj = id2obj[session['id']]
+    except:
+        return login()
+
     data = {
         'template_name_or_list': 'main.html',
         'username': session['username'],
         'cnt': cnt[session['username']],
     }
-        
     data['status'] = session['status']
-    if session['status'] == 0:
+    if session['status'] == 0:# {{{
         if request.method == 'POST':
             certcode = request.form['certcode']
-            res = mine.login(certcode)
+            res = my_obj.login(certcode)
             if res:
                 session['status'] += 1
                 return redirect(url_for('index'))
             else:
                 data['msg'] = '[ERR] wrong certcode!'
-        path = mine.get_certcode()
+        path = my_obj.get_certcode()
         data['certcode_path'] = path
         data['current'] = '[LOG] enter certcode and login in payment'
-
-    elif session['status'] == 1:
+# }}}
+    elif session['status'] == 1:# {{{
         if request.method == 'POST':
             date = request.form['date']
             session['date'] = date.split('|')
@@ -71,12 +72,12 @@ def main():
             return redirect(url_for('index'))
 
         data['msg'] = ['[SUC] login succeed!']
-        dates = [['0', 'please select the date']] + \
-                [get_date(i) for i in range(4)]
+        dates = [get_date(i) + [''] for i in range(5)]
+        dates[3][2] = 'checked'
         data['dates'] = dates
         data['current'] = '[LOG] select date'
-        
-    elif session['status'] == 2:
+        # }}}
+    elif session['status'] == 2:# {{{
         if request.method == 'POST':
             route = request.form['route']
             session['route'] = route.split('|')
@@ -84,30 +85,57 @@ def main():
             return redirect(url_for('index'))
 
         data['msg'] = ['[LOG] select date: ' + session['date'][-1]]
-        raw_route_list = mine.get_route(session['date'][0])
-        route_list = [['0', 'please select your route']] + \
-                [[route['routecode'], 'name: {}, time: {}, code: {}'\
+        raw_route_list = my_obj.get_route(session['date'][0])
+        route_list = [[route['routecode'], 'name: {}, time: {}, code: {}'\
                 .format(route['routename'], route['routetime'],\
-                route['routecode'])] for route in raw_route_list]
+                route['routecode']), ''] for route in raw_route_list]
+
+        def mark_favorite(favorite):
+            for each in route_list:
+                if favorite in each[1] and '助教' not in each[1]:
+                    each[2] = 'checked'
+                    return True
+
+        for each in route_list:
+            if '助教' in each[1]:
+                each[2] = 'disabled'
+
+        if not mark_favorite('玉泉路—雁栖湖18:00'):
+            mark_favorite('雁栖湖—玉泉路13:00')
+        
         data['route_list'] = route_list
         data['current'] = '[LOG] select route'
-
-    elif session['status'] == 3:
+# }}}
+    elif session['status'] == 3:# {{{
         if request.method == 'POST':
-            wait = request.form['wait']
+            wait = request.form['time']
             session['wait'] = wait
             session['status'] += 1
             return redirect(url_for('index'))
-        data['current'] = '[LOG] choose one of the following two buttons and press!'
+        data['current'] = 'choose order time'
+        def get_next_18_time():
+            cur = (time.time() + 8 * 3600) % 86400 / 3600 
+            return get_date(1 if cur >= 18 else 0)
+        _date = time.localtime(time.time())
+        h, m = _date.tm_hour, _date.tm_min
+
+        data['t1'], data['t2'] = '', ''
+        if h >= 18 and h <= 18:
+            data['t1'] = 'checked'
+        else:
+            data['t2'] = 'checked'
+        data['next_18_time'] = get_next_18_time()[0] + ' 18:00:00'
         data['msg'] = ['[LOG] select date: ' + session['date'][-1],\
                 '[LOG] select route: ' + session['route'][-1]]
-    elif session['status'] == 4:
+        data['msg'] += ['[WRN] DO NOT login too early before system opens, there may be a time limit for COOCKIES!']
+# }}}
+    elif session['status'] == 4:# {{{
         wait = int(session['wait'])
         if wait == 1:
             if 'time' not in session:
-                res = mine.calc_time()
+                res = my_obj.calc_time()
                 session['time'] = res
-            
+            data['current'] = 'please wait ...'
             cur = time.time()
             data['msg'] = ['[WRN] DO NOT login too early before system opens, there may be a time limit for COOCKIES!']
             if cur > session['time']:
@@ -115,75 +143,117 @@ def main():
                 session['status'] += 1
                 redirect(url_for('index'))
             delta = int(session['time'] - cur)
-            data['delta'] = delta
+            eta = ''
+            if delta > 3600:
+                eta += '%dh '%(delta//3600)
+                delta %= 3600
+            if delta > 60:
+                eta += '%dm '%(delta//60)
+                delta %= 60
+            eta += '%ds'%delta
+            data['eta'] = eta
+
             data['fresh'] = max(1, delta//3)
         else:
             session['status'] += 1
-            data['delta'] = 1
-            data['fresh'] = 1
+            data['current'] = 'please wait ...'
+            data['eta'] = '0s'
+            data['fresh'] = 0
             redirect(url_for('index'))
+# }}}
+    elif session['status'] == 5:# {{{
+        data['current'] = 'sending order information ...'
+        result, data['msg'] = my_obj.buy(session)
+        data['fresh'] = 1
 
-    elif session['status'] == 5:
-        result, data['msg'] = mine.buy(session)
         if result:
             session['status'] += 1
         redirect(url_for('index'))
-    elif session['status'] == 6:
-        data['wechat'] = mine.wechat
-        data['msg'] = ['[SUC] please scan the QRcode with wechat']
-    else:
+# }}}
+    elif session['status'] == 6:# {{{
+        data['current'] = 'succeed'
+        data['wechat'] = my_obj.wechat
+        data['msg'] = ['[SUC] ordered successfully!', \
+                '[LOG] please scan the QRcode with wechat']
+# }}}
+    else:# {{{
         data['msg'] = ['[ERR] no such status']
+# }}}
     return render_template(**data)
 
 def login(username=None):
     if request.method == 'POST':
         username = request.form['username']
-    if username in hash_table:
-        username = hash_table[username]
+    if username in hash2user:
+        username = hash2user[username]
+
         if cnt[username] == limit:
-            return render_template('login.html', **{'msg': 'login limit!'})
+            return render_template('login.html', **{'msg': 'Login limit!'})
         cnt[username] += 1
+
         session['username'] = username
         session['id'] = '{}{}'.format(username, time.time())
         session['status'] = 0
-        obj[session['id']] = Order(username, session['id'])
+        user2id[username].add(session['id'])
+        id2obj[session['id']] = Order(username, session['id'])
         return redirect(url_for('index'))
     else:
-        data = {
-            'msg': 'Please login with your code first!' \
-                    if username == None else \
-                    ('This code \'%s\' matches nobody!' % username)
-        }
+        data = {'msg': 'Error, no such code in data base!' if username \
+                else 'Please enter your code to log in!'}
         return render_template('login.html', **data)
     
-@app.route('/logout')
+@app.route('/logout')# {{{
 def logout():
-    cnt[session['username']] -= 1
-    session.pop('username')
-    obj.pop(session['id'])
+    try:
+        id2obj.pop(session['id'])
+        cnt[session['username']] -= 1
+        session.clear()
+    except:
+        pass
     return redirect(url_for('index'))
-
-@app.route('/previous')
-def previous():
-    if session['status'] > 1:
-        session['status'] -= 1
+# }}}
+@app.route('/undo')# {{{
+def undo():
+    try:
+        if session['status'] > 1:
+            session['status'] -= 1
+    except:
+        pass
     return redirect(url_for('index'))
-
-@app.route('/restart')
+# }}}
+@app.route('/refresh')# {{{
+def refresh():
+    return redirect(url_for('index'))
+# }}}
+@app.route('/logout_all')# {{{
+def logout_all():
+    try:
+        username = session['username']
+        for identifier in user2id[username]:
+            id2obj.pop(identifier)
+        cnt[username] = 0
+    except:
+        pass
+    return redirect(url_for('index'))
+# }}}
+@app.route('/restart')# {{{
 def restart():
-    session['status'] = min(session['status'], 1)
+    try:
+        session['status'] = min(session['status'], 1)
+    except:
+        pass
     return redirect(url_for('index'))
-
-@app.route('/', methods=['GET', 'POST'])
+# }}}
+@app.route('/', methods=['GET', 'POST'])# {{{
 def index():
     if 'username' in session:
         return main()
     return login()
-
-@app.route('/login/<string:username>')
+# }}}
+@app.route('/login/<string:username>')# {{{
 def _login(username=None):
     return login(username)
-
+# }}}
 
 if __name__ == '__main__':
     host = '0.0.0.0' if args.public else '127.0.0.1'

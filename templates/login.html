@@ -1,14 +1,63 @@
-<html>
-    <title>
-        login
-    </title>
-    <body>
-        <h1> {{msg}}</h1>
-        <div>
-            <form action="" method="post">
-                <p>Your Code:<input type=text name=username>
-                <p><input type=submit value=Login>
-            </form>
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Bootstrap -->
+    <link href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+    <!--[if lt IE 9]>
+      <script src="https://cdn.bootcss.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+      <script src="https://cdn.bootcss.com/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    <title> bus ticket </title>
+  </head>
+
+  <body>
+    <!-- jQuery (Bootstrap 的所有 JavaScript 插件都依赖 jQuery，所以必须放在前边) -->
+    <script src="https://cdn.bootcss.com/jquery/1.12.4/jquery.min.js"></script>
+    <!-- 加载 Bootstrap 的所有 JavaScript 插件。你也可以根据需要只加载单个插件。 -->
+    <script src="https://cdn.bootcss.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    
+    <nav class="navbar navbar-default">
+      <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+        <a class="navbar-brand" href="/">Bus ticket</a>
         </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+          <ul class="nav navbar-nav">
+            <p class="navbar-text">{{msg}}</p>
+            <form class="navbar-form navbar-left" action="" method="post">
+              <div class="form-group">
+                <input type="text" class="form-control" placeholder="Code" name=username>
+              </div>
+              <button type="submit" class="btn btn-default">Log in</button>
+            </form>
+          </ul>
+        </div><!-- /.navbar-collapse -->
+      </div><!-- /.container-fluid -->
+    </nav>
+    <body>
+      <div class="container">
+        <div class="jumbotron">
+          <h2> Contact to admin, if you need an access. </h2>
+          <div class="center-block" align='right'>
+
+            <address>
+              <strong>indestinee</strong><br>
+              <a href="mailto:indestinee@gmail.com">indestinee@gmail.com</a>
+            </address>
+          </div>
+        </div>
+      </div>
     </body>
 </html>
