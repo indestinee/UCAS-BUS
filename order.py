@@ -11,6 +11,7 @@ def success_judge(response):# {{{
 
 class Order(object):
     def __init__(self, username, identifier):
+        self.logout = False
         self.username = username
         self.id = identifier
         self.cache_path = sub_cfg.cache_path
@@ -54,9 +55,11 @@ class Order(object):
         return route_list
     # }}}
     def calc_time(self):
-        t = (3600 - int(time.time()) % 3600) + sub_cfg.delta \
-                + int(time.time())
-        return t
+        cur = time.time()
+        t = 16 * 3600 - (cur + 8 * 3600) % 86400
+        if t < 0:
+            t += 86400
+        return int(t + cur)
 
     def second_step(self):# {{{
         data = {
@@ -152,7 +155,7 @@ class Order(object):
                 return False, log
 
         else:
-            log.append('[LOG] full return {}'.format(information))
+            log.append('[ERR] full return {}'.format(information))
             return False, log
             
 
