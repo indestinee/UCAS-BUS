@@ -60,7 +60,7 @@ def main():
                 session['status'] += 1
                 return redirect(url_for('index'))
             else:
-                data['msg'] = '[ERR] wrong certcode!'
+                data['msg'] = ['[ERR] wrong certcode!']
         path = my_obj.get_certcode()
         data['certcode_path'] = path
         data['current'] = 'enter certcode and login in payment'
