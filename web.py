@@ -134,7 +134,13 @@ def main():
             data['t1'] = 'checked'
         else:
             data['t2'] = 'checked'
-        data['next_18_time'] = get_next_18_time()[0] + ' 18:00:00'
+        next_18_time = get_next_18_time()[0] + ' 18:00:00'
+        current_time = '%d-%02d-%02d %02d:%02d:%02d' % (\
+            _date.tm_year, _date.tm_mon, _date.tm_mday, \
+            _date.tm_hour, _date.tm_min, _date.tm_sec)
+
+        data['s1'] = 'start now ' + current_time
+        data['s2'] = 'start at  ' + next_18_time
         data['msg'] = ['[LOG] select date: ' + session['date'][-1],\
                 '[LOG] select route: ' + session['route'][-1]]
         data['msg'] += ['[WRN] DO NOT login too early before system opens, there may be a time limit for COOCKIES!']
