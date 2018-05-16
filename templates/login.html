@@ -23,24 +23,15 @@
       <div class="container-fluid">
         <!-- Brand and toggle get grouped for better mobile display -->
         <div class="navbar-header">
-          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
         <a class="navbar-brand" href="/">Bus ticket</a>
         </div>
 
         <!-- Collect the nav links, forms, and other content for toggling -->
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
           <ul class="nav navbar-nav">
-            <p class="navbar-text">{{msg}}</p>
             <form class="navbar-form navbar-left" action="" method="post">
               <div class="form-group">
-                <input type="text" class="form-control" placeholder="Code" name=username>
               </div>
-              <button type="submit" class="btn btn-default">Log in</button>
             </form>
           </ul>
         </div><!-- /.navbar-collapse -->
@@ -48,10 +39,19 @@
     </nav>
     <body>
       <div class="container">
+        <div class="alert alert-info" role="alert">
+          <form class="form-inline" align='center' action='' method='post'>
+            {{msg}}
+            <div class="form-group">
+              <input type="password" class="form-control" placeholder="Code" name=username>
+            </div>
+            <button type="submit" class="btn btn-default">Log in</button>
+          </form>
+        </div>
+        <br>
         <div class="jumbotron">
           <h2> Contact to admin, if you need an access. </h2>
           <div class="center-block" align='right'>
-
             <address>
               <strong>indestinee</strong><br>
               <a href="mailto:indestinee@gmail.com">indestinee@gmail.com</a>

@@ -44,6 +44,7 @@ def main():
         my_obj = id2obj[session['id']]
     except:
         return login()
+ 
 
     data = {
         'template_name_or_list': 'main.html',
@@ -62,7 +63,7 @@ def main():
                 data['msg'] = '[ERR] wrong certcode!'
         path = my_obj.get_certcode()
         data['certcode_path'] = path
-        data['current'] = '[LOG] enter certcode and login in payment'
+        data['current'] = 'enter certcode and login in payment'
 # }}}
     elif session['status'] == 1:# {{{
         if request.method == 'POST':
@@ -75,7 +76,8 @@ def main():
         dates = [get_date(i) + [''] for i in range(5)]
         dates[3][2] = 'checked'
         data['dates'] = dates
-        data['current'] = '[LOG] select date'
+        
+        data['current'] = 'select date'
         # }}}
     elif session['status'] == 2:# {{{
         if request.method == 'POST':
@@ -84,8 +86,16 @@ def main():
             session['status'] += 1
             return redirect(url_for('index'))
 
+        data['current'] = 'select route'
+
         data['msg'] = ['[LOG] select date: ' + session['date'][-1]]
-        raw_route_list = my_obj.get_route(session['date'][0])
+        try:
+            raw_route_list = my_obj.get_route(session['date'][0])
+        except:
+            data['msg'] += ['[ERR] connot get route! something wrong with either ucas server or this server!']
+            data['route_list'] = [['0', '[ERR] connot get route! something wrong with either ucas server or this server!', 'disabled']]
+            return render_template(**data)
+        
         route_list = [[route['routecode'], 'name: {}, time: {}, code: {}'\
                 .format(route['routename'], route['routetime'],\
                 route['routecode']), ''] for route in raw_route_list]
@@ -102,9 +112,8 @@ def main():
 
         if not mark_favorite('玉泉路—雁栖湖18:00'):
             mark_favorite('雁栖湖—玉泉路13:00')
-        
         data['route_list'] = route_list
-        data['current'] = '[LOG] select route'
+        
 # }}}
     elif session['status'] == 3:# {{{
         if request.method == 'POST':
@@ -112,6 +121,7 @@ def main():
             session['wait'] = wait
             session['status'] += 1
             return redirect(url_for('index'))
+
         data['current'] = 'choose order time'
         def get_next_18_time():
             cur = (time.time() + 8 * 3600) % 86400 / 3600 
