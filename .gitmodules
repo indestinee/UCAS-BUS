@@ -1,6 +1,6 @@
-[submodule "crawl"]
-	path = crawl2
-	url = https://github.com/indestinee/crawl2
 [submodule "crawl2"]
 	path = crawl2
 	url = https://github.com/indestinee/crawl2
+[submodule "certcode"]
+	path = certcode
+	url = https://github.com/indestinee/digit-recognition
