@@ -196,7 +196,7 @@ if __name__ == '__main__':
         # print('[LOG] the following buying is a test..')
         # buy()
         print('[LOG] the real one is starting soon..')
-        t = (3600 - int(time.time()) % 3600) + delta
+        t = (3600 - int(time.time()) % 3600) + sub_cfg.delta
         print('[LOG] sleep for %d secs' % t)
         print('[WRN] DO NOT login too early before system opens, there may be a time limit for COOCKIES!')
         time.sleep(t)

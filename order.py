@@ -61,7 +61,7 @@ class Order(object):
     # }}}
     def calc_time(self):
         cur = time.time()
-        t = 18 * 3600 - (cur + 8 * 3600) % 86400
+        t = 18 * 3600 + sub_cfg.delta - (cur + 8 * 3600) % 86400
         if t < 0:
             t += 86400
         return int(t + cur)
