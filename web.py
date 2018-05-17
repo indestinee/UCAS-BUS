@@ -143,7 +143,7 @@ def main():
             data['t1'] = 'checked'
         else:
             data['t2'] = 'checked'
-        next_18_time = get_next_18_time()[0] + ' 18:00:00'
+        next_18_time = get_next_18_time()[0] + ' 18:00:00 (server time)'
 
         current_time = get_current_time()
         data['s1'] = 'start now ' + current_time
