@@ -1,4 +1,3 @@
-# http://docs.jinkan.org/docs/flask/quickstart.html#quickstart
 from flask import Flask, render_template, session, \
         redirect, url_for, escape, request, Response
 import re, argparse, os, pickle, time
