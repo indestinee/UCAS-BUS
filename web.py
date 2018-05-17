@@ -12,7 +12,7 @@ def get_current_time():
         _date.tm_hour, _date.tm_min, _date.tm_sec)
     return current_time
 
-limit = 10
+limit = 100
 users_path = './data/'
 daydayday = ['星期' + each for each in '一二三四五六日']
 
