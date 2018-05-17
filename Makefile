@@ -9,7 +9,8 @@ install:
 	git submodule update
 	pip3 install setuptools
 	pip3 install flask
-
+	pip3 install numpy
+	pip3 install opencv-python
 clean:
 	rm -rf *cache
 

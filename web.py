@@ -5,6 +5,7 @@ import re, argparse, os, pickle, time
 from order import Order
 from hash_table import hash_func
 import numpy as np
+from certcode.raw_data import recognition
 def get_current_time():
     _date = time.localtime(time.time())
     current_time = '%d-%02d-%02d %02d:%02d:%02d' % (\
@@ -15,6 +16,27 @@ def get_current_time():
 limit = 100
 users_path = './data/'
 daydayday = ['星期' + each for each in '一二三四五六日']
+
+try:
+    import cv2
+    max_attemps_recognition = 2
+    pattern = np.array(\
+            [cv2.imread('certcode/%d.png'%i, 0) for i in range(10)])
+    pattern = pattern.reshape(10, -1).transpose()
+except:
+    max_attemps_recognition = 0
+
+def auto_recognition_attemps(my_obj):
+    for i in range(max_attemps_recognition):
+        path = my_obj.get_certcode()
+        path = os.path.join('static', path)
+        img = cv2.imread(path, 1)
+        certcode = recognition(img, pattern)
+        s = '%d%d%d%d'%(certcode[0], certcode[1], certcode[2], certcode[3])
+        res = my_obj.login(s)
+        if res:
+            return True
+    return False
 
 def get_web_args():# {{{
     parser = argparse.ArgumentParser(description='bus ticket')
@@ -68,10 +90,15 @@ def main():
                 return redirect(url_for('index'))
             else:
                 data['msg'] = ['[ERR] wrong certcode!']
+            
+        if auto_recognition_attemps(my_obj):
+            session['status'] += 1
+            return redirect(url_for('index'))
+
         path = my_obj.get_certcode()
         data['certcode_path'] = path
         data['current'] = 'enter certcode and login in payment'
-# }}}
+    # }}}
     elif session['status'] == 1:# {{{
         if request.method == 'POST':
             date = request.form['date']

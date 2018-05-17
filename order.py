@@ -53,7 +53,6 @@ class Order(object):
     def get_route(self, date, cache):# {{{
         route_list = self.route_list_cache.load(date)
         if not route_list or not cache:
-            print('!!!!! no cache')
             response = self.first_step(date)
             route_list = response.json()['routelist']
             self.route_list_cache.save(route_list, date)

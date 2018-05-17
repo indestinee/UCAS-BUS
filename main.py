@@ -1,12 +1,28 @@
 from crawl2.spider import *
 from crawl2.utils import *
 from commom import sub_cfg
-import time, os
-import argparse
+import time, os, argparse
+import numpy as np
 # from IPython import embed
+from certcode.raw_data import recognition
 
 cache = Cache(sub_cfg.cache_path)
 touchdir(sub_cfg.html_path)
+
+
+def auto_recognition_attemps(img, pattern):
+    certcode = recognition(img, pattern)
+    return '%d%d%d%d'%(certcode[0], certcode[1], certcode[2], certcode[3])
+
+try:
+    import cv22
+    pattern = np.array(\
+            [cv2.imread('certcode/%d.png'%i, 0) for i in range(10)])
+    pattern = pattern.reshape(10, -1).transpose()
+    kwargs = {'recognition': auto_recognition_attemps, 'pattern':pattern}
+except:
+    kwargs = {}
+
 
 def get_args():# {{{
     parser = argparse.ArgumentParser(description='UCAS_BUS')
@@ -140,11 +156,12 @@ if __name__ == '__main__':
         os.mkdir(sub_cfg.user_save_file)
 
     user_file = os.path.join(sub_cfg.user_save_file, args.user)
+    
 
     while not spider.login(
             'http://payment.ucas.ac.cn/NetWorkUI/fontuserLogin', 
             success_judge, 'http://payment.ucas.ac.cn/NetWorkUI/authImage',
-            user_file, args.anonymous
+            user_file, args.anonymous, **kwargs,
         ):
         print('[ERR] failed to login please check username, password and certcode')
 
