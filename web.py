@@ -49,6 +49,7 @@ with open('user_information.txt', 'w') as f:
 def main():
     try:
         my_obj = id2obj[session['id']]
+        # return logout()
     except:
         return login()
 
@@ -277,6 +278,7 @@ def index():
 # }}}
 @app.route('/login/<string:username>')# {{{
 def _login(username=None):
+    logout()
     return login(username)
 # }}}
 
