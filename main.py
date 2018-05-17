@@ -112,7 +112,7 @@ def get_route():# {{{
         return route_list[choice]
 # }}}
 def buy():# {{{
-    # try:
+    try:
         response = second_step()
         information = response.json()
         ret = information['returncode']
@@ -127,7 +127,7 @@ def buy():# {{{
         else:
             print('[LOG] full return', information)
             return False
-    # except:
+    except:
         print('[ERR] failed to book, re-run.')
         return False
 # }}}
