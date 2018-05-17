@@ -41,9 +41,11 @@
       <div class="container">
         <div class="alert alert-info" role="alert">
           <form class="form-inline" align='center' action='' method='post'>
-            {{msg}}
+            <label>
+              {{msg}}
+            </label>
             <div class="form-group">
-              <input type="password" class="form-control" placeholder="Code" name=username>
+              <input type="password" class="form-control" placeholder="Code" autocomplete="new-password" name=username>
             </div>
             <button type="submit" class="btn btn-default">Log in</button>
           </form>

@@ -4,6 +4,13 @@ from flask import Flask, render_template, session, \
 import re, argparse, os, pickle, time
 from order import Order
 from hash_table import hash_func
+import numpy as np
+def get_current_time():
+    _date = time.localtime(time.time())
+    current_time = '%d-%02d-%02d %02d:%02d:%02d' % (\
+        _date.tm_year, _date.tm_mon, _date.tm_mday, \
+        _date.tm_hour, _date.tm_min, _date.tm_sec)
+    return current_time
 
 limit = 10
 users_path = './data/'
@@ -44,7 +51,6 @@ def main():
         my_obj = id2obj[session['id']]
     except:
         return login()
- 
 
     data = {
         'template_name_or_list': 'main.html',
@@ -68,6 +74,7 @@ def main():
     elif session['status'] == 1:# {{{
         if request.method == 'POST':
             date = request.form['date']
+            session['cache'] = True if 'cache' in request.form else False
             session['date'] = date.split('|')
             session['status'] += 1
             return redirect(url_for('index'))
@@ -78,7 +85,7 @@ def main():
         data['dates'] = dates
         
         data['current'] = 'select date'
-        # }}}
+    # }}}
     elif session['status'] == 2:# {{{
         if request.method == 'POST':
             route = request.form['route']
@@ -90,7 +97,8 @@ def main():
 
         data['msg'] = ['[LOG] select date: ' + session['date'][-1]]
         try:
-            raw_route_list = my_obj.get_route(session['date'][0])
+            raw_route_list = my_obj.get_route(session['date'][0], \
+                    session['cache'])
         except:
             data['msg'] += ['[ERR] connot get route! something wrong with either ucas server or this server!']
             data['route_list'] = [['0', '[ERR] connot get route! something wrong with either ucas server or this server!', 'disabled']]
@@ -135,10 +143,8 @@ def main():
         else:
             data['t2'] = 'checked'
         next_18_time = get_next_18_time()[0] + ' 18:00:00'
-        current_time = '%d-%02d-%02d %02d:%02d:%02d' % (\
-            _date.tm_year, _date.tm_mon, _date.tm_mday, \
-            _date.tm_hour, _date.tm_min, _date.tm_sec)
 
+        current_time = get_current_time()
         data['s1'] = 'start now ' + current_time
         data['s2'] = 'start at  ' + next_18_time
         data['msg'] = ['[LOG] select date: ' + session['date'][-1],\
@@ -155,10 +161,11 @@ def main():
             cur = time.time()
             data['msg'] = ['[WRN] DO NOT login too early before system opens, there may be a time limit for COOCKIES!']
             if cur > session['time']:
-                session['wait'] = '0'
                 session['status'] += 1
-                redirect(url_for('index'))
+                session['attemps'] = 0
+                return redirect(url_for('index'))
             delta = int(session['time'] - cur)
+            data['fresh'] = max(1, delta//3)
             eta = ''
             if delta > 3600:
                 eta += '%dh '%(delta//3600)
@@ -167,24 +174,23 @@ def main():
                 eta += '%dm '%(delta//60)
                 delta %= 60
             eta += '%ds'%delta
+            data['cur_time'] = get_current_time()
             data['eta'] = eta
-
-            data['fresh'] = max(1, delta//3)
         else:
             session['status'] += 1
-            data['current'] = 'please wait ...'
-            data['eta'] = '0s'
-            data['fresh'] = 0
-            redirect(url_for('index'))
+            session['attemps'] = 0
+            return redirect(url_for('index'))
 # }}}
     elif session['status'] == 5:# {{{
-        data['current'] = 'sending order information ...'
+        session['attemps'] += 1
+        data['current'] = 'sending order information [%d]...' % \
+                session['attemps']
         result, data['msg'] = my_obj.buy(session)
-        data['fresh'] = 1
+        data['fresh'] = np.random.uniform(1.0, 2.0)
 
         if result:
             session['status'] += 1
-        redirect(url_for('index'))
+            redirect(url_for('index'))
 # }}}
     elif session['status'] == 6:# {{{
         data['current'] = 'succeed'
@@ -209,7 +215,7 @@ def login(username=None):
 
         session['username'] = username
         session['id'] = '{}{}'.format(username, time.time())
-        session['status'] = 0
+        session['status'] = 0   #init
         user2id[username].add(session['id'])
         id2obj[session['id']] = Order(username, session['id'])
         return redirect(url_for('index'))
@@ -217,7 +223,7 @@ def login(username=None):
         data = {'msg': 'Error, no such code in data base!' if username \
                 else 'Please enter your code to log in!'}
         return render_template('login.html', **data)
-    
+
 @app.route('/logout')# {{{
 def logout():
     try:
@@ -228,10 +234,13 @@ def logout():
         pass
     return redirect(url_for('index'))
 # }}}
+
 @app.route('/undo')# {{{
 def undo():
     try:
-        if session['status'] > 1:
+        if session['status'] >= 5:
+            session['status'] = 3
+        elif session['status'] > 1:
             session['status'] -= 1
     except:
         pass

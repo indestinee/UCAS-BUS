@@ -16,6 +16,7 @@ class Order(object):
         self.id = identifier
         self.cache_path = sub_cfg.cache_path
         self.cache = Cache(self.cache_path)
+        self.route_list_cache = Cache(sub_cfg.route_list_path)
         self.user_path = os.path.join(sub_cfg.user_save_file, username)
         self.user_cache = Cache(self.user_path)
         self.spider = Spider()
@@ -49,14 +50,18 @@ class Order(object):
         }
         return self.spider.post(url, data)
     # }}}
-    def get_route(self, date):# {{{
-        response = self.first_step(date)
-        route_list = response.json()['routelist']
+    def get_route(self, date, cache):# {{{
+        route_list = self.route_list_cache.load(date)
+        if not route_list or not cache:
+            print('!!!!! no cache')
+            response = self.first_step(date)
+            route_list = response.json()['routelist']
+            self.route_list_cache.save(route_list, date)
         return route_list
     # }}}
     def calc_time(self):
         cur = time.time()
-        t = 16 * 3600 - (cur + 8 * 3600) % 86400
+        t = 18 * 3600 - (cur + 8 * 3600) % 86400
         if t < 0:
             t += 86400
         return int(t + cur)
