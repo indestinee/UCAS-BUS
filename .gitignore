@@ -1,6 +1,7 @@
 __pycache__
 crawl
 data
+.idea/
 *cache*
 *swp
 user_information.txt
