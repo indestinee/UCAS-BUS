@@ -1,20 +1,27 @@
 from flask import Flask, render_template, session, \
         redirect, url_for, escape, request, Response
 import re, argparse, os, pickle, time
+import numpy as np
+
 from order import Order
 from hash_table import hash_func
-import numpy as np
 from certcode.raw_data import recognition
-def get_current_time():
+from log import Log 
+
+
+def get_current_time():# {{{
     _date = time.localtime(time.time())
     current_time = '%d-%02d-%02d %02d:%02d:%02d' % (\
         _date.tm_year, _date.tm_mon, _date.tm_mday, \
         _date.tm_hour, _date.tm_min, _date.tm_sec)
     return current_time
+# }}}
 
 limit = 100
 users_path = './data/'
 daydayday = ['星期' + each for each in '一二三四五六日']
+last_operate = get_current_time()
+running = os.path.isfile('running.status')
 
 try:
     import cv2
@@ -44,6 +51,7 @@ def get_web_args():# {{{
     args = parser.parse_args()
     return args
 # }}}
+
 def get_date(delta=0):# {{{
     t = time.localtime(time.time() + delta * 86400)
     s = '%d-%02d-%02d' % (t.tm_year, t.tm_mon, t.tm_mday)
@@ -59,6 +67,7 @@ hash2user = {hash_func(user): user for user in users}
 cnt = {user: 0 for user in users}
 id2obj = {}
 user2id = {user: set() for user in users}
+log = Log('./log/log.txt', 1, debug=True)
 
 if not args.public:
     hash2user['123'] = hash2user[hash_func(users[-1])]
@@ -68,17 +77,14 @@ with open('user_information.txt', 'w') as f:
         f.write('%s: %s\n' % (value, key))
 
 def main():
-    try:
-        my_obj = id2obj[session['id']]
-        # return logout()
-    except:
-        return login()
+    my_obj = id2obj[session['id']]
 
     data = {
         'template_name_or_list': 'main.html',
         'username': session['username'],
         'cnt': cnt[session['username']],
     }
+
     data['status'] = session['status']
     if session['status'] == 0:# {{{
         if request.method == 'POST':
@@ -89,6 +95,7 @@ def main():
                 return redirect(url_for('index'))
             else:
                 data['msg'] = ['[ERR] wrong certcode!']
+            
             
         if auto_recognition_attemps(my_obj):
             session['status'] += 1
@@ -228,15 +235,19 @@ def main():
     else:# {{{
         data['msg'] = ['[ERR] no such status']
 # }}}
+    for each in data['msg']:
+        log.save(each, session)
     return render_template(**data)
 
-def login(username=None):
+def login(username=None):# {{{
     if request.method == 'POST':
         username = request.form['username']
-    if username in hash2user:
+
+    if username in hash2user and \
+            (hash2user[username] == 'admin' or running):
         username = hash2user[username]
 
-        if cnt[username] == limit:
+        if cnt[username] == limit and username != 'admin':
             return render_template('login.html', **{'msg': 'Login limit!'})
         cnt[username] += 1
 
@@ -245,17 +256,23 @@ def login(username=None):
         session['status'] = 0   #init
         user2id[username].add(session['id'])
         id2obj[session['id']] = Order(username, session['id'])
+        log.save('[SUC] login', session, session['username'] == 'admin')
         return redirect(url_for('index'))
     else:
-        data = {'msg': 'Error, no such code in data base!' if username \
-                else 'Please enter your code to log in!'}
+        data = {'msg': '[ERR] system is closed!' if not running else (\
+                '[ERR] no such code in data base!' if username \
+                else '[I N] please enter your code to log in!'),
+                'open': 'disabled' if not running else ''}
         return render_template('login.html', **data)
+# }}}
 
 @app.route('/logout')# {{{
 def logout():
     try:
+        _name, _id = session['username'], session['id']
         id2obj.pop(session['id'])
         cnt[session['username']] -= 1
+        log.save('[LOG] log out', session)
         session.clear()
     except:
         pass
@@ -269,14 +286,17 @@ def undo():
             session['status'] = 3
         elif session['status'] > 1:
             session['status'] -= 1
+        log.save('[LOG] undo, status --> %d' % session['status'], session)
     except:
         pass
     return redirect(url_for('index'))
 # }}}
+
 @app.route('/refresh')# {{{
 def refresh():
     return redirect(url_for('index'))
 # }}}
+
 @app.route('/logout_all')# {{{
 def logout_all():
     try:
@@ -284,31 +304,93 @@ def logout_all():
         for identifier in user2id[username]:
             id2obj.pop(identifier)
         cnt[username] = 0
+        log.save('[LOG] log out all', session)
     except:
         pass
     return redirect(url_for('index'))
 # }}}
+
 @app.route('/restart')# {{{
 def restart():
     try:
         session['status'] = min(session['status'], 1)
+        log.save('[LOG] restart', session)
     except:
         pass
     return redirect(url_for('index'))
 # }}}
+
+def admin():# {{{
+    logs = log.load()
+    st = 0
+    ed = st + 100
+    data = {
+        'template_name_or_list': 'admin.html',
+        'username': session['username'],
+        'last_operate': last_operate,
+        'cnt': cnt[session['username']],
+        'user_online': len(id2obj),
+        'logs': logs,
+        'st': st,
+        'ed': ed,
+        'current_time': get_current_time()
+    }
+    return render_template(**data)
+    # }}}
+
 @app.route('/', methods=['GET', 'POST'])# {{{
 def index():
     if 'username' in session:
+        try:
+            my_obj = id2obj[session['id']]
+        except:
+            session.clear()
+            return login()
+        if session['username'] == 'admin':
+            return admin()
+        last_operate = get_current_time()
         return main()
+    last_operate = get_current_time()
     return login()
 # }}}
+
 @app.route('/login/<string:username>')# {{{
 def _login(username=None):
     logout()
     return login(username)
 # }}}
 
+def shutdown_server():
+    func = request.environ.get('werkzeug.server.shutdown')
+    if func is None:
+        raise RuntimeError('Not running with the Werkzeug Server')
+    func()
+
+@app.route('/admin')
+@app.route('/admin/<string:order>')
+def reboot(order=''):
+    if 'username' in session and 'id' in session and \
+            session['id'] in id2obj and session['username'] == 'admin':
+        if order == 'reboot':   
+            shutdown_server()
+            msg = '[LOG] server reboots...'
+            log.save(msg, session)
+        elif order == 'shutdown':
+            shutdown_server()
+            msg = '[LOG] server shuts down...'
+            log.save(msg, session)
+            os.system('rm running.status')
+        elif order == 'start':
+            shutdown_server()
+            msg = '[LOG] server starts...'
+            log.save(msg, session)
+            os.system('touch running.status')
+        return msg
+    else:
+        return redirect(url_for('index'))
+
 if __name__ == '__main__':
     host = '0.0.0.0' if args.public else '127.0.0.1'
     app.secret_key = os.urandom(32)
+    log.save('[LOG] system starts!', ignore=True)
     app.run(host=host, port=args.port, debug=True if not args.public else False)

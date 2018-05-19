@@ -5,3 +5,5 @@ data
 *swp
 user_information.txt
 static/*
+log
+running.status
