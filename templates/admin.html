@@ -48,12 +48,42 @@
 
     <div class="container">
       <div class="alert alert-info" role="alert">
-        <p align=center> Hi, <strong>{{username}}</strong>! Server has <strong>{{user_online}}</strong> account(s) online, including {{cnt}} admin(s). </p>
+        <p align=center> Hi, <strong>{{username}}</strong>! Server has <strong>{{user_online}}</strong> account(s) online, <strong>including</strong> {{cnt}} admin(s). </p>
         <p align=center> Last operation time: {{last_operate}}.</p>
         <p align=center> This operation time: {{current_time}}.</p>
 
       </div>
       <div class="jumbotron">
+        <div class="row">
+          <h3 align="center"><strong> online status</strong>
+          <div class="alert alert-info" role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span></button>
+            <br>
+            <div class='row'>
+              <div class="col-md-2">User</div>
+              <div class="col-md-2">Count</div>     
+              <div class="col-md-8">details</div>     
+            </div>
+            {% for user, value in users.items() %}
+              {% if value[0] > 0 %}
+            <div class='row'>
+              <div class="col-md-2">{{user}}</div>
+              <div class="col-md-2">{{value[0]}}</div>     
+              <div class="col-md-8"></div>     
+            </div>
+                {% for ids in value[1] %}
+            <div class='row'>
+              <div class="col-md-2"></div>
+              <div class="col-md-2"></div>     
+              <div class="col-md-8">{{ids}}</div>     
+            </div>
+                {% endfor %}
+              {% endif %}
+              <br>
+            {% endfor %}
+          </div>
+        </div>
         <div class="row">
           <h3 align="center"><strong> Log File </strong>
         </div>

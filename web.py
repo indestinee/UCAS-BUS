@@ -9,12 +9,13 @@ from certcode.raw_data import recognition
 from log import Log 
 
 
-def get_current_time():# {{{
+def get_current_time(ns=True):# {{{
     _date = time.localtime(time.time())
     current_time = '%d-%02d-%02d %02d:%02d:%02d' % (\
         _date.tm_year, _date.tm_mon, _date.tm_mday, \
         _date.tm_hour, _date.tm_min, _date.tm_sec)
-    return current_time
+    
+    return current_time if not ns else (current_time + (' %f' % (time.time() % 1)))
 # }}}
 
 limit = 100
@@ -22,6 +23,7 @@ users_path = './data/'
 daydayday = ['星期' + each for each in '一二三四五六日']
 last_operate = get_current_time()
 running = os.path.isfile('running.status')
+ip_count = {}
 
 try:
     import cv2
@@ -252,11 +254,12 @@ def login(username=None):# {{{
         cnt[username] += 1
 
         session['username'] = username
-        session['id'] = '{}{}'.format(username, time.time())
+        session['id'] = '{} {} {}'.format(username, get_current_time(), request.remote_addr)
         session['status'] = 0   #init
         user2id[username].add(session['id'])
         id2obj[session['id']] = Order(username, session['id'])
-        log.save('[SUC] login', session, session['username'] == 'admin')
+        if session['username'] == 'admin':
+            log.save('[SUC] login', session, True)
         return redirect(url_for('index'))
     else:
         data = {'msg': '[ERR] system is closed!' if not running else (\
@@ -271,6 +274,7 @@ def logout():
     try:
         _name, _id = session['username'], session['id']
         id2obj.pop(session['id'])
+        user2id[_name].remove(_id)
         cnt[session['username']] -= 1
         log.save('[LOG] log out', session)
         session.clear()
@@ -301,10 +305,12 @@ def refresh():
 def logout_all():
     try:
         username = session['username']
+        _id = session['id']
         for identifier in user2id[username]:
             id2obj.pop(identifier)
+        user2id[username].clear()
         cnt[username] = 0
-        log.save('[LOG] log out all', session)
+        log.save('[LOG] log out all', {'username': username, 'id': _id})
     except:
         pass
     return redirect(url_for('index'))
@@ -324,6 +330,12 @@ def admin():# {{{
     logs = log.load()
     st = 0
     ed = st + 100
+    
+    user_information = {}
+    for user, value in user2id.items():
+        user_information[user] = [len(value), value]
+
+
     data = {
         'template_name_or_list': 'admin.html',
         'username': session['username'],
@@ -333,13 +345,35 @@ def admin():# {{{
         'logs': logs,
         'st': st,
         'ed': ed,
-        'current_time': get_current_time()
+        'current_time': get_current_time(),
+        'users': user_information,
+
     }
     return render_template(**data)
     # }}}
 
+ip_time = 600
+ip_limit = 3000
+
 @app.route('/', methods=['GET', 'POST'])# {{{
 def index():
+    ip = request.remote_addr
+    if ip not in ip_count:
+        ip_count[ip] = []
+    cur = time.time()
+    n = len(ip_count[ip])
+    i = 0
+    while (i < n):
+        if ip_count[ip][i] + ip_time > cur:
+            break
+        i += 1
+    ip_count[ip] = ip_count[ip][i:]
+    ip_count[ip].append(cur)
+    if len(ip_count[ip]) > ip_limit:
+        msg = '[ERR] ip blocked! do not access me with high frequency! wait for %.2f minute(s)!' % (ip_time / 60)
+        log.save(msg)
+        return msg
+
     if 'username' in session:
         try:
             my_obj = id2obj[session['id']]
