@@ -1,6 +1,6 @@
 from flask import Flask, render_template, session, \
         redirect, url_for, escape, request, Response
-import re, argparse, os, pickle, time
+import re, argparse, os, pickle, time, json
 import numpy as np
 
 from order import Order
@@ -9,7 +9,7 @@ from certcode.raw_data import recognition
 from log import Log 
 
 
-def get_current_time(ns=True):# {{{
+def get_current_time(ns=False):# {{{
     _date = time.localtime(time.time())
     current_time = '%d-%02d-%02d %02d:%02d:%02d' % (\
         _date.tm_year, _date.tm_mon, _date.tm_mday, \
@@ -97,7 +97,6 @@ def main():
                 return redirect(url_for('index'))
             else:
                 data['msg'] = ['[ERR] wrong certcode!']
-            
             
         if auto_recognition_attemps(my_obj):
             session['status'] += 1
@@ -222,20 +221,32 @@ def main():
         data['current'] = 'sending order information [%d]...' % \
                 session['attemps']
         result, data['msg'] = my_obj.buy(session)
-        data['fresh'] = np.random.uniform(1.0, 2.0)
 
+        data['fresh'] = np.random.uniform(1.0, 2.0)
         if result:
             session['status'] += 1
             redirect(url_for('index'))
+        else:
+            try:
+                ret = data['msg'][-1]
+                s = '[ERR] full return '
+                if ret[:len(s)] == s:
+                    ret = ret[len(s):]
+                ret = json.loads(ret.replace('\'', '"'))
+                if ret['returnmsg'] in ['业务逻辑判断失败[用户当天该路线预约次数超过限制，禁止预约]']:
+                    data['fresh'] = 0xffffffff
+            except:
+                pass
+
 # }}}
     elif session['status'] == 6:# {{{
         data['current'] = 'succeed'
         data['wechat'] = my_obj.wechat
-        data['msg'] = ['[SUC] ordered successfully!', \
-                '[LOG] please scan the QRcode with wechat']
+        data['msg'] = ['[SUC] get QR code successfully!', \
+                '[LOG] please scan the QR code with wechat']
 # }}}
     else:# {{{
-        data['msg'] = ['[ERR] no such status']
+        data['msg'] = ['[ERR] no such status', '[WRN] system may have large bugs!']
 # }}}
     for each in data['msg']:
         log.save(each, session)
@@ -254,7 +265,11 @@ def login(username=None):# {{{
         cnt[username] += 1
 
         session['username'] = username
-        session['id'] = '{} {} {}'.format(username, get_current_time(), request.remote_addr)
+        ip = request.headers['x_real_ip'] \
+                if 'x_real_ip' in request.headers \
+                else request.remote_addr
+        session['id'] = '{} {} {}'.format(\
+                username, get_current_time(True), ip)
         session['status'] = 0   #init
         user2id[username].add(session['id'])
         id2obj[session['id']] = Order(username, session['id'])

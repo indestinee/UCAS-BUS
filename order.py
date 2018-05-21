@@ -112,14 +112,15 @@ class Order(object):
         text = response.text.replace('src="/NetWork', 'src="http://payment.ucas.ac.cn/NetWork')
         return text
     # }}}
+
     def buy(self, s):
-        log = ['[LOG] start buying']
+        log = ['[LOG] start ordering']
         self.route, self.date = s['route'], s['date']
 
         try:
             response = self.second_step()
         except:
-            log.append('[ERR] failed in step 2 @ spider')
+            log.append('[ERR] failed in step 2 @ spider: probably server does not response')
             return False, log
         try:
             information = response.json()
@@ -128,24 +129,27 @@ class Order(object):
             log.append('[ERR] failed in step 2 @ json()')
             return False, log
 
-        log.append('[LOG] step2 server return code: ' + ret)
+        
+        log.append('[%s] step2 server return code: %s' % ('SUC' if ret == 'SUCCESS' else 'ERR', ret))
+
         if ret == 'SUCCESS':
             try:
                 self.third_step(information)
             except:
-                log.append('[ERR] failed in step 3 @ spider')
+                log.append('[ERR] failed in step 3 @ spider: probably server does not response')
                 return False, log
+
             try:
                 response = self.fouth_step(information)
             except:
-                log.append('[ERR] failed in step 4 @ spider')
+                log.append('[ERR] failed in step 4 @ spider: probably server does not response')
                 return False, log
             
             try:
                 urlcode = re.compile('toUtf8(.*?);').\
                         findall(response.text)[0][2:-2]
             except:
-                log.append('[ERR] failed in step 4 @ re')
+                log.append('[ERR] failed in step 5 @ re: failed to get urlcode')
                 return False, log
             self.wechat = urlcode
 
@@ -155,8 +159,10 @@ class Order(object):
                 log.append('[SUC] all succeed')
                 return True, log
             except:
-                log.append('[ERR] failed in step 5 @ spider')
-                return False, log
+                log.append('[ERR] failed in step 6 @ spider')
+                log.append('[WRN] try to fix the problem!')
+                log.append('[WRN] we are not sure whether the QR code follow counts. you can choose to re-order one.')
+                return True, log
 
         else:
             log.append('[ERR] full return {}'.format(information))
