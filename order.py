@@ -138,6 +138,7 @@ class Order(object):
             information = response.json()
             ret = information['returncode']
         except:
+            print(response.text)
             log.append('[ERR] failed in step 2 @ json()')
             return False, log
 
