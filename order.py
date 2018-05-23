@@ -155,7 +155,7 @@ class Order(object):
                     self.names += name
                 else:
                     self.names += ['{}'.format(name)]
-                    log.append('[ERR] {} found in <name> @ step 2'\
+                    log.append('[ERR] {} found in <name> @ step 3'\
                             .format_map(name))
             except:
                 log.append('[ERR] failed in step 3 @ spider: probably server does not response')
@@ -169,7 +169,7 @@ class Order(object):
                     self.names += name
                 else:
                     self.names += ['{}'.format(name)]
-                    log.append('[ERR] {} found in <name> @ step 2'\
+                    log.append('[ERR] {} found in <name> @ step 4'\
                             .format_map(name))
 
             except:
@@ -191,7 +191,7 @@ class Order(object):
                     self.names += name
                 else:
                     self.names += ['{}'.format(name)]
-                    log.append('[ERR] {} found in <name> @ step 2'\
+                    log.append('[ERR] {} found in <name> @ step 5'\
                             .format_map(name))
                 self.text = text
                 log.append('[SUC] all succeed')
