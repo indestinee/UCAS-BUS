@@ -35,16 +35,18 @@ except:
     max_attemps_recognition = 0
 
 def auto_recognition_attemps(my_obj):
+    name = ''
+    msg = '[LOG] auto recognition not used!'
     for i in range(max_attemps_recognition):
         path = my_obj.get_certcode()
         path = os.path.join('static', path)
         img = cv2.imread(path, 1)
         certcode = recognition(img, pattern)
         s = '%d%d%d%d'%(certcode[0], certcode[1], certcode[2], certcode[3])
-        res = my_obj.login(s)
+        res, name, msg = my_obj.login(s)
         if res:
-            return True
-    return False
+            return res, name, msg
+    return False, name, msg
 
 def get_web_args():# {{{
     parser = argparse.ArgumentParser(description='bus ticket')
@@ -80,31 +82,42 @@ with open('user_information.txt', 'w') as f:
 
 def main():
     my_obj = id2obj[session['id']]
-
     data = {
         'template_name_or_list': 'main.html',
         'username': session['username'],
         'cnt': cnt[session['username']],
+        'real_name': session['real_name'] if 'real_name' in session \
+                else 'Unknown'
     }
-
+    if 'msg' in session:
+        data['msg'] = session['msg']
+        session.pop('msg')
+    else:
+        data['msg'] = []
     data['status'] = session['status']
+
     if session['status'] == 0:# {{{
         if request.method == 'POST':
             certcode = request.form['certcode']
-            res = my_obj.login(certcode)
+            res, name, msg = my_obj.login(certcode)
             if res:
                 session['status'] += 1
+                session['msg'] = [msg]
+                session['real_name'] = name
                 return redirect(url_for('index'))
             else:
-                data['msg'] = ['[ERR] wrong certcode!']
-            
-        if auto_recognition_attemps(my_obj):
-            session['status'] += 1
-            return redirect(url_for('index'))
+                data['msg'] += [msg]
+        else:   
+            res, name, msg = auto_recognition_attemps(my_obj)
+            if res:
+                session['status'] += 1
+                session['msg'] = [msg]
+                session['real_name'] = name
+                return redirect(url_for('index'))
 
-        path = my_obj.get_certcode()
-        data['certcode_path'] = path
-        data['current'] = 'enter certcode and login in payment'
+            path = my_obj.get_certcode()
+            data['certcode_path'] = path
+            data['current'] = 'enter certcode and login in payment'
     # }}}
     elif session['status'] == 1:# {{{
         if request.method == 'POST':
@@ -113,13 +126,12 @@ def main():
             session['date'] = date.split('|')
             session['status'] += 1
             return redirect(url_for('index'))
-
-        data['msg'] = ['[SUC] login succeed!']
-        dates = [get_date(i) + [''] for i in range(5)]
-        dates[3][2] = 'checked'
-        data['dates'] = dates
-        
-        data['current'] = 'select date'
+        else:
+            dates = [get_date(i) + [''] for i in range(5)]
+            dates[3][2] = 'checked'
+            data['dates'] = dates
+            data['current'] = 'select date'
+            data['msg'] += ['[WRN] one session is only allowed to order one ticket in the same time, or there will be a huge mess. (failure)']
     # }}}
     elif session['status'] == 2:# {{{
         if request.method == 'POST':
@@ -127,65 +139,65 @@ def main():
             session['route'] = route.split('|')
             session['status'] += 1
             return redirect(url_for('index'))
-
-        data['current'] = 'select route'
-
-        data['msg'] = ['[LOG] select date: ' + session['date'][-1]]
-        try:
-            raw_route_list = my_obj.get_route(session['date'][0], \
-                    session['cache'])
-        except:
-            data['msg'] += ['[ERR] connot get route! something wrong with either ucas server or this server!']
-            data['route_list'] = [['0', '[ERR] connot get route! something wrong with either ucas server or this server!', 'disabled']]
-            return render_template(**data)
+        else:
+            data['current'] = 'select route'
+            data['msg'] += ['[LOG] select date: ' + session['date'][-1]]
+            try:
+                raw_route_list = my_obj.get_route(session['date'][0], \
+                        session['cache'])
+            except:
+                data['msg'] += ['[ERR] connot get route! something wrong with either ucas server or this server!']
+                data['route_list'] = [['0', '[ERR] connot get route! something wrong with either ucas server or this server!', 'disabled']]
+                return render_template(**data)
         
-        route_list = [[route['routecode'], 'name: {}, time: {}, code: {}'\
-                .format(route['routename'], route['routetime'],\
-                route['routecode']), ''] for route in raw_route_list]
+            route_list = [[route['routecode'], 'name: {}, time: {}, code: {}'\
+                    .format(route['routename'], route['routetime'],\
+                    route['routecode']), ''] for route in raw_route_list]
 
-        def mark_favorite(favorite):
+            def mark_favorite(favorite):
+                for each in route_list:
+                    if favorite in each[1] and '助教' not in each[1]:
+                        each[2] = 'checked'
+                        return True
+
             for each in route_list:
-                if favorite in each[1] and '助教' not in each[1]:
-                    each[2] = 'checked'
-                    return True
+                if '助教' in each[1]:
+                    each[2] = 'disabled'
 
-        for each in route_list:
-            if '助教' in each[1]:
-                each[2] = 'disabled'
-
-        if not mark_favorite('玉泉路—雁栖湖18:00'):
-            mark_favorite('雁栖湖—玉泉路13:00')
-        data['route_list'] = route_list
+            if not mark_favorite('玉泉路—雁栖湖18:00'):
+                mark_favorite('雁栖湖—玉泉路13:00')
+            data['route_list'] = route_list
         
-# }}}
+    # }}}
     elif session['status'] == 3:# {{{
         if request.method == 'POST':
             wait = request.form['time']
             session['wait'] = wait
             session['status'] += 1
             return redirect(url_for('index'))
-
-        data['current'] = 'choose order time'
-        def get_next_18_time():
-            cur = (time.time() + 8 * 3600) % 86400 / 3600 
-            return get_date(1 if cur >= 18 else 0)
-        _date = time.localtime(time.time())
-        h, m = _date.tm_hour, _date.tm_min
-
-        data['t1'], data['t2'] = '', ''
-        if h >= 18 and h <= 18:
-            data['t1'] = 'checked'
         else:
-            data['t2'] = 'checked'
-        next_18_time = get_next_18_time()[0] + ' 18:00:00 (server time)'
+            data['current'] = 'choose order time'
+            def get_next_18_time():
+                cur = (time.time() + 8 * 3600) % 86400 / 3600 
+                return get_date(1 if cur >= 18 else 0)
+            _date = time.localtime(time.time())
+            h, m = _date.tm_hour, _date.tm_min
 
-        current_time = get_current_time()
-        data['s1'] = 'start now ' + current_time
-        data['s2'] = 'start at  ' + next_18_time
-        data['msg'] = ['[LOG] select date: ' + session['date'][-1],\
-                '[LOG] select route: ' + session['route'][-1]]
-        data['msg'] += ['[WRN] DO NOT login too early before system opens, there may be a time limit for COOCKIES!']
-# }}}
+            data['t1'], data['t2'] = '', ''
+            if h >= 18 and h <= 18:
+                data['t1'] = 'checked'
+            else:
+                data['t2'] = 'checked'
+            next_18_time = get_next_18_time()[0] +\
+                    ' 18:00:00 (server time)'
+
+            current_time = get_current_time()
+            data['s1'] = 'start now ' + current_time
+            data['s2'] = 'start at  ' + next_18_time
+            data['msg'] = ['[LOG] select date: ' + session['date'][-1],\
+                    '[LOG] select route: ' + session['route'][-1]]
+            data['msg'] += ['[WRN] DO NOT login too early before system opens, there may be a time limit for COOCKIES!']
+    # }}}
     elif session['status'] == 4:# {{{
         wait = int(session['wait'])
         if wait == 1:
@@ -194,7 +206,7 @@ def main():
                 session['time'] = res
             data['current'] = 'please wait ...'
             cur = time.time()
-            data['msg'] = ['[WRN] DO NOT login too early before system opens, there may be a time limit for COOCKIES!']
+            data['msg'] += ['[WRN] DO NOT login too early before system opens, there may be a time limit for COOCKIES!']
             if cur > session['time']:
                 session['status'] += 1
                 session['attemps'] = 0
@@ -220,7 +232,8 @@ def main():
         session['attemps'] += 1
         data['current'] = 'sending order information [%d]...' % \
                 session['attemps']
-        result, data['msg'] = my_obj.buy(session)
+        result, msg = my_obj.buy(session)
+        data['msg'] += msg
 
         data['fresh'] = np.random.uniform(1.0, 2.0)
         if result:
@@ -241,9 +254,21 @@ def main():
 # }}}
     elif session['status'] == 6:# {{{
         data['current'] = 'succeed'
+        
+        WRN = False
+        if len(my_obj.names) != 3:
+            WRN = True
+        for name in my_obj.names:
+            if name != session['real_name']:
+                WRN = True
+
+        if WRN:
+            data['msg'] += ['[ERR] {} found in <name>, is either not a triplet or not equal to the {} <realname>'.format(my_obj.names, session['real_name']), '[ERR] you need to re-login!!!!!!!']
+        else:
+            data['msg'] += ['[SUC] name checked, exactly {}'.format(session['real_name'])]
         data['wechat'] = my_obj.wechat
-        data['msg'] = ['[SUC] get QR code successfully!', \
-                '[LOG] please scan the QR code with wechat']
+        data['msg'] += ['[SUC] get QR code successfully!', \
+                '[LOG] please scan the QR code with wechat or open this {} in wechat'.format(my_obj.wechat)]
 # }}}
     else:# {{{
         data['msg'] = ['[ERR] no such status', '[WRN] system may have large bugs!']

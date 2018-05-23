@@ -3,6 +3,7 @@ from crawl2.spider import *
 from crawl2.utils import *
 import os, time
 from hash_table import hash_func
+name_re = re.compile('<li>你好，<a class="c4"  href="#">(.*?)</a></li>')
 
 def success_judge(response):# {{{
     response.encoding = 'utf-8'
@@ -40,7 +41,16 @@ class Order(object):
 
         response = self.spider.post(\
                 url, data=data, headers=self.spider.headers)
-        return success_judge(response)
+
+        response.encoding = 'utf-8'
+        name = name_re.findall(response.text)
+        if len(name) == 0:
+            msg = '[ERR] get name failed!'
+            name = 'unknown'
+        else:
+            name = name[0]
+            msg = '[SUC] %s logins successfully!' % name
+        return success_judge(response), name, msg
 
     def first_step(self, date):# {{{ 
         url = 'http://payment.ucas.ac.cn/NetWorkUI/queryBusByDate'
@@ -117,6 +127,8 @@ class Order(object):
         log = ['[LOG] start ordering']
         self.route, self.date = s['route'], s['date']
 
+        self.names = []
+
         try:
             response = self.second_step()
         except:
@@ -134,13 +146,31 @@ class Order(object):
 
         if ret == 'SUCCESS':
             try:
-                self.third_step(information)
+                response = self.third_step(information)
+
+                response.encoding = 'utf-8'
+                name = name_re.findall(response.text)
+                if len(name) == 1:
+                    self.names += name
+                else:
+                    self.names += ['{}'.format(name)]
+                    log.append('[ERR] {} found in <name> @ step 2'\
+                            .format_map(name))
             except:
                 log.append('[ERR] failed in step 3 @ spider: probably server does not response')
                 return False, log
 
             try:
                 response = self.fouth_step(information)
+                response.encoding = 'utf-8'
+                name = name_re.findall(response.text)
+                if len(name) == 1:
+                    self.names += name
+                else:
+                    self.names += ['{}'.format(name)]
+                    log.append('[ERR] {} found in <name> @ step 2'\
+                            .format_map(name))
+
             except:
                 log.append('[ERR] failed in step 4 @ spider: probably server does not response')
                 return False, log
@@ -155,6 +185,13 @@ class Order(object):
 
             try:
                 text = self.fifth_step(urlcode)
+                name = name_re.findall(text)
+                if len(name) == 1:
+                    self.names += name
+                else:
+                    self.names += ['{}'.format(name)]
+                    log.append('[ERR] {} found in <name> @ step 2'\
+                            .format_map(name))
                 self.text = text
                 log.append('[SUC] all succeed')
                 return True, log

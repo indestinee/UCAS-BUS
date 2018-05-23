@@ -41,7 +41,8 @@
             <!-- <li><a href="/undo">undo</a></li> -->
           </ul>
           <ul class="nav navbar-nav navbar-right">
-            <li class='active'><a href="/logout">Log Out</a></li>
+            <li class='active'><a href="#">{{real_name}}</a></li>
+            <li><a href="/logout">Log Out</a></li>
             <li><a href="/logout_all">Log Out All</a></li>
           </ul>
         </div><!-- /.navbar-collapse -->
@@ -54,7 +55,8 @@
       <div class="alert alert-info" role="alert">
         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
         <span aria-hidden="true">&times;</span></button>
-        <p align=center> Hi, <strong>{{username}}</strong>! You have <strong>{{cnt}}</strong> account(s) online. </p>
+        <p align=center> Hola, amigo <strong>{{real_name}}</strong>! You have <strong>{{cnt}}</strong> account(s) online. </p>
+        <p align=center> Make sure you are in the right account now!</p>
       </div>
       {% endif %}
       <div class="jumbotron">
