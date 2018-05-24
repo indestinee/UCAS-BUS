@@ -3,50 +3,13 @@ from flask import Flask, render_template, session, \
 import re, argparse, os, pickle, time, json
 import numpy as np
 
-from order import Order
-from hash_table import hash_func
+from eric import Eric
+from tools import *
 from certcode.raw_data import recognition
 from log import Log 
+from certcode.init import *
+from commom import cfg as ucasbus_cfg
 
-
-def get_current_time(ns=False):# {{{
-    _date = time.localtime(time.time())
-    current_time = '%d-%02d-%02d %02d:%02d:%02d' % (\
-        _date.tm_year, _date.tm_mon, _date.tm_mday, \
-        _date.tm_hour, _date.tm_min, _date.tm_sec)
-    
-    return current_time if not ns else (current_time + (' %f' % (time.time() % 1)))
-# }}}
-
-limit = 100
-users_path = './data/'
-daydayday = ['星期' + each for each in '一二三四五六日']
-last_operate = get_current_time()
-running = os.path.isfile('running.status')
-ip_count = {}
-
-try:
-    import cv2
-    max_attemps_recognition = 2
-    pattern = np.array(\
-            [cv2.imread('certcode/%d.png'%i, 0) for i in range(10)])
-    pattern = pattern.reshape(10, -1).transpose()
-except:
-    max_attemps_recognition = 0
-
-def auto_recognition_attemps(my_obj):
-    name = ''
-    msg = '[LOG] auto recognition not used!'
-    for i in range(max_attemps_recognition):
-        path = my_obj.get_certcode()
-        path = os.path.join('static', path)
-        img = cv2.imread(path, 1)
-        certcode = recognition(img, pattern)
-        s = '%d%d%d%d'%(certcode[0], certcode[1], certcode[2], certcode[3])
-        res, name, msg = my_obj.login(s)
-        if res:
-            return res, name, msg
-    return False, name, msg
 
 def get_web_args():# {{{
     parser = argparse.ArgumentParser(description='bus ticket')
@@ -55,131 +18,160 @@ def get_web_args():# {{{
     args = parser.parse_args()
     return args
 # }}}
+if __name__ == '__main__':# {{{
+    args = get_web_args()
+    running = os.path.isfile(ucasbus_cfg.running_status_file)
+    ip_counters = {}
+    app = Flask(__name__, static_folder=ucasbus_cfg.static_folder,\
+            static_url_path=ucasbus_cfg.static_url_path)
 
-def get_date(delta=0):# {{{
-    t = time.localtime(time.time() + delta * 86400)
-    s = '%d-%02d-%02d' % (t.tm_year, t.tm_mon, t.tm_mday)
-    day = t.tm_wday
-    return [s, '%s %s' % (s, daydayday[day])]
+    users = os.listdir(ucasbus_cfg.users_path)
+    hash2user = {hash_func(user): user for user in users}
+    user_counters = {user: 0 for user in users}
+    user2id = {user: set() for user in users}
+    user2eric = {}
+    current_time = get_current_time(True)
+    log = Log(os.path.join(ucasbus_cfg.log_path, current_time), \
+            1, debug=True)
+
+    if not args.public:
+        hash2user['123'] = hash2user[hash_func(users[0])]
+
+    with open('user_information.txt', 'w') as f:
+        for key, value in hash2user.items():
+            f.write('%s: %s\n' % (value, key))
 # }}}
-
-args = get_web_args()
-app = Flask(__name__, static_folder='static', static_url_path='/static')
-
-users = os.listdir(users_path)
-hash2user = {hash_func(user): user for user in users}
-cnt = {user: 0 for user in users}
-id2obj = {}
-user2id = {user: set() for user in users}
-log = Log('./log/log.txt', 1, debug=True)
-
-if not args.public:
-    hash2user['123'] = hash2user[hash_func(users[-1])]
-
-with open('user_information.txt', 'w') as f:
-    for key, value in hash2user.items():
-        f.write('%s: %s\n' % (value, key))
-
+def login_ucas(eric, data): # {{{
+    if request.method == 'POST':
+        certcode = request.form['certcode']
+        ret, msg, name = eric.login(certcode)
+        data['msg'] += msg
+        if ret == 0:
+            return name[0]
+        else:
+            path = eric.get_certcode()
+            data['certcode_path'] = path
+            data['current'] = 'enter certcode and login in payment'
+    else:   
+        ret, msg, name = auto_recognition_attemps(eric, attemps=5)
+        data['msg'] += msg
+        if ret == 0:
+            return name[0]
+        else:
+            path = eric.get_certcode()
+            data['certcode_path'] = path
+            data['current'] = 'enter certcode and login in payment'
+    return None
+# }}}
+    
 def main():
-    my_obj = id2obj[session['id']]
+    ''' init# {{{
+    '''
+    username, identifier =\
+            session['username'], session['id']
+    
+    eric = user2eric[username]
+    realname = eric.realname
+    page = session['page']
+    if page >= len(eric.page):
+        page = eric.new_page()
+        session['page'] = page
+    
+    inform = eric.page[page]
+    status = inform['status']
+
     data = {
         'template_name_or_list': 'main.html',
-        'username': session['username'],
-        'cnt': cnt[session['username']],
-        'real_name': session['real_name'] if 'real_name' in session \
-                else 'Unknown'
+        'username': username,
+        'realname': realname,
+        'cnt': user_counters[username],
+        'status': status,
+        'login': eric._login,
+        'total_page': len(eric.page),
+        'pages': eric.page,
+        'page': page,
     }
+    
     if 'msg' in session:
         data['msg'] = session['msg']
         session.pop('msg')
     else:
         data['msg'] = []
-    data['status'] = session['status']
-
-    if session['status'] == 0:# {{{
-        if request.method == 'POST':
-            certcode = request.form['certcode']
-            res, name, msg = my_obj.login(certcode)
-            if res:
-                session['status'] += 1
-                session['msg'] = [msg]
-                session['real_name'] = name
-                return redirect(url_for('index'))
-            else:
-                data['msg'] += [msg]
-        else:   
-            res, name, msg = auto_recognition_attemps(my_obj)
-            if res:
-                session['status'] += 1
-                session['msg'] = [msg]
-                session['real_name'] = name
-                return redirect(url_for('index'))
-
-            path = my_obj.get_certcode()
-            data['certcode_path'] = path
-            data['current'] = 'enter certcode and login in payment'
     # }}}
-    elif session['status'] == 1:# {{{
+
+    if not eric._login:# {{{
+        ret = login_ucas(eric, data)
+        if ret != None:
+            session['msg'] = data['msg']
+            eric._login = True
+            eric.realname = ret
+            return redirect(url_for('index'))
+    # }}}
+    elif status == 1:# {{{
         if request.method == 'POST':
             date = request.form['date']
-            session['cache'] = True if 'cache' in request.form else False
-            session['date'] = date.split('|')
-            session['status'] += 1
+            session['msg'] = data['msg']
+            inform['cache'] = True if 'cache' in request.form else False
+            inform['date'] = date.split('|')
+            inform['status'] += 1
             return redirect(url_for('index'))
         else:
-            dates = [get_date(i) + [''] for i in range(5)]
+            dates = [get_date_day(i) + [''] for i in range(5)]
             dates[3][2] = 'checked'
             data['dates'] = dates
             data['current'] = 'select date'
-            data['msg'] += ['[WRN] one session is only allowed to order one ticket in the same time, or there will be a huge mess. (failure)']
     # }}}
-    elif session['status'] == 2:# {{{
+    elif status == 2:# {{{
         if request.method == 'POST':
             route = request.form['route']
-            session['route'] = route.split('|')
-            session['status'] += 1
+            inform['route'] = route.split('|')
+            inform['status'] += 1
+            session['msg'] = data['msg']
             return redirect(url_for('index'))
         else:
             data['current'] = 'select route'
-            data['msg'] += ['[LOG] select date: ' + session['date'][-1]]
-            try:
-                raw_route_list = my_obj.get_route(session['date'][0], \
-                        session['cache'])
-            except:
-                data['msg'] += ['[ERR] connot get route! something wrong with either ucas server or this server!']
-                data['route_list'] = [['0', '[ERR] connot get route! something wrong with either ucas server or this server!', 'disabled']]
-                return render_template(**data)
-        
-            route_list = [[route['routecode'], 'name: {}, time: {}, code: {}'\
+            data['msg'] += ['[LOG] select date: ' + inform['date'][-1]]
+            ret, logs, raw = eric.get_route(inform['date'][0], \
+                        inform['cache'])
+            data['msg'] += logs
+            if ret == 0:
+                raw_route_list = raw[0] 
+                route_list = [[route['routecode'], \
+                        'name: {}, time: {}, code: {}'\
                     .format(route['routename'], route['routetime'],\
                     route['routecode']), ''] for route in raw_route_list]
 
-            def mark_favorite(favorite):
+                def mark_favorite(favorites):
+                    for favorite in favorites:
+                        for each in route_list:
+                            if favorite in each[1] and \
+                                    '助教' not in each[1]:
+                                each[2] = 'checked'
+                                return True
+
                 for each in route_list:
-                    if favorite in each[1] and '助教' not in each[1]:
-                        each[2] = 'checked'
-                        return True
+                    if '助教' in each[1]:
+                        each[2] = 'disabled'
 
-            for each in route_list:
-                if '助教' in each[1]:
-                    each[2] = 'disabled'
-
-            if not mark_favorite('玉泉路—雁栖湖18:00'):
-                mark_favorite('雁栖湖—玉泉路13:00')
-            data['route_list'] = route_list
+                mark_favorite(\
+                        ['玉泉路—雁栖湖18:00', '雁栖湖—玉泉路13:00'])
+                data['route_list'] = route_list
+            else:
+                data['route_list'] = [['0', '[ERR] request route list error! payment@ucas may not open', 'disabled']]
         
     # }}}
-    elif session['status'] == 3:# {{{
+    elif status == 3:# {{{
         if request.method == 'POST':
             wait = request.form['time']
-            session['wait'] = wait
-            session['status'] += 1
+            inform['wait'] = wait
+            inform['status'] += 1
+            inform['msg'] = data['msg']
             return redirect(url_for('index'))
         else:
             data['current'] = 'choose order time'
             def get_next_18_time():
                 cur = (time.time() + 8 * 3600) % 86400 / 3600 
-                return get_date(1 if cur >= 18 else 0)
+                return get_date_day(1 if cur >= 18 else 0)
             _date = time.localtime(time.time())
             h, m = _date.tm_hour, _date.tm_min
 
@@ -189,27 +181,28 @@ def main():
             else:
                 data['t2'] = 'checked'
             next_18_time = get_next_18_time()[0] +\
-                    ' 18:00:00 (server time)'
+                    ' 18:00:00'
 
             current_time = get_current_time()
-            data['s1'] = 'start now ' + current_time
-            data['s2'] = 'start at  ' + next_18_time
-            data['msg'] = ['[LOG] select date: ' + session['date'][-1],\
-                    '[LOG] select route: ' + session['route'][-1]]
+            data['s1'] = 'start at ' + current_time + ' current time'
+            data['s2'] = 'start at ' + next_18_time + ' server time'
+            data['msg'] = ['[LOG] select date: ' + inform['date'][-1],\
+                    '[LOG] select route: ' + inform['route'][-1]]
     # }}}
-    elif session['status'] == 4:# {{{
-        wait = int(session['wait'])
+    elif status == 4:# {{{
+        wait = int(inform['wait'])
         if wait == 1:
-            if 'time' not in session:
-                res = my_obj.calc_time()
-                session['time'] = res
+            if 'time' not in inform:
+                res = eric.calc_time()
+                inform['time'] = res
             data['current'] = 'please wait ...'
             cur = time.time()
-            if cur > session['time']:
-                session['status'] += 1
-                session['attemps'] = 0
+            if cur > inform['time']:
+                inform['status'] += 1
+                inform['attemps'] = 0
+                session['msg'] = data['msg']
                 return redirect(url_for('index'))
-            delta = int(session['time'] - cur)
+            delta = int(inform['time'] - cur)
             data['fresh'] = max(1, delta//3)
             eta = ''
             if delta > 3600:
@@ -222,21 +215,23 @@ def main():
             data['cur_time'] = get_current_time()
             data['eta'] = eta
         else:
-            session['status'] += 1
-            session['attemps'] = 0
+            inform['status'] += 1
+            inform['attemps'] = 0
+            session['msg'] = data['msg']
             return redirect(url_for('index'))
 # }}}
-    elif session['status'] == 5:# {{{
-        session['attemps'] += 1
+    elif status == 5:# {{{
+        inform['attemps'] += 1
         data['current'] = 'sending order information [%d]...' % \
-                session['attemps']
-        result, msg = my_obj.buy(session)
+                inform['attemps']
+        result, msg, raw = eric.buy(inform['route'], inform['date'])
         data['msg'] += msg
-
-        data['fresh'] = np.random.uniform(1.0, 2.0)
-        if result:
-            session['status'] += 1
-            redirect(url_for('index'))
+        data['fresh'] = np.random.uniform(1.0, 2.0) * 10000
+        if result == 0:
+            inform['status'] += 1
+            inform['urlcode'] = raw[0]
+            session['msg'] = data['msg']
+            return redirect(url_for('index'))
         else:
             try:
                 ret = data['msg'][-1]
@@ -250,23 +245,12 @@ def main():
                 pass
 
 # }}}
-    elif session['status'] == 6:# {{{
+    elif status == 6:# {{{
         data['current'] = 'succeed'
         
-        WRN = False
-        if len(my_obj.names) != 3:
-            WRN = True
-        for name in my_obj.names:
-            if name != session['real_name']:
-                WRN = True
-
-        if WRN:
-            data['msg'] += ['[ERR] {} found in <name>, is either not a triplet or not equal to the {} <realname>'.format(my_obj.names, session['real_name']), '[ERR] you need to re-login!!!!!!!']
-        else:
-            data['msg'] += ['[SUC] name checked, exactly {}'.format(session['real_name'])]
-        data['wechat'] = my_obj.wechat
+        data['wechat'] = inform['urlcode']
         data['msg'] += ['[SUC] get QR code successfully!', \
-                '[LOG] please scan the QR code with wechat or open this {} in wechat'.format(my_obj.wechat)]
+                '[LOG] please scan the QR code with wechat or open this {} in wechat'.format(inform['urlcode'])]
 # }}}
     else:# {{{
         data['msg'] = ['[ERR] no such status', '[WRN] system may have large bugs!']
@@ -278,26 +262,30 @@ def main():
 def login(username=None):# {{{
     if request.method == 'POST':
         username = request.form['username']
-
-    if username in hash2user and \
-            (hash2user[username] == 'admin' or running):
-        username = hash2user[username]
-
-        if cnt[username] == limit and username != 'admin':
-            return render_template('login.html', **{'msg': 'Login limit!'})
-        cnt[username] += 1
-
+    
+    username = hash2user[username] if username in hash2user else None
+    
+    if username and (username == 'admin' or running):
         session['username'] = username
+
+        if user_counters[username] == ucasbus_cfg.online_limit \
+                and username != 'admin':
+            return render_template('login.html', \
+                    **{'msg': '[ERR] login limit, too many accounts online. contact to admin.'})
+        user_counters[username] += 1
+
         ip = request.headers['x_real_ip'] \
-                if 'x_real_ip' in request.headers \
-                else request.remote_addr
+                if 'x_real_ip' in request.headers else request.remote_addr
+
         session['id'] = '{} {} {}'.format(\
                 username, get_current_time(True), ip)
-        session['status'] = 0   #init
+
         user2id[username].add(session['id'])
-        id2obj[session['id']] = Order(username, session['id'])
-        if session['username'] == 'admin':
-            log.save('[SUC] login', session, True)
+        if username not in user2eric:
+            user2eric[username] = Eric(username, ucasbus_cfg.page_limit)
+        eric = user2eric[username]
+        session['realname'] = eric.realname
+        session['page'] = eric.first_page()
         return redirect(url_for('index'))
     else:
         data = {'msg': '[ERR] system is closed!' if not running else (\
@@ -311,9 +299,8 @@ def login(username=None):# {{{
 def logout():
     try:
         _name, _id = session['username'], session['id']
-        id2obj.pop(session['id'])
         user2id[_name].remove(_id)
-        cnt[session['username']] -= 1
+        user_counters[_name] -= 1
         log.save('[LOG] log out', session)
         session.clear()
     except:
@@ -321,44 +308,43 @@ def logout():
     return redirect(url_for('index'))
 # }}}
 
-@app.route('/undo')# {{{
-def undo():
-    try:
-        if session['status'] >= 5:
-            session['status'] = 3
-        elif session['status'] > 1:
-            session['status'] -= 1
-        log.save('[LOG] undo, status --> %d' % session['status'], session)
-    except:
-        pass
-    return redirect(url_for('index'))
-# }}}
-
-@app.route('/refresh')# {{{
-def refresh():
-    return redirect(url_for('index'))
-# }}}
-
-@app.route('/logout_all')# {{{
-def logout_all():
+@app.route('/undo')
+def undo():# {{{
     try:
         username = session['username']
-        _id = session['id']
-        for identifier in user2id[username]:
-            id2obj.pop(identifier)
-        user2id[username].clear()
-        cnt[username] = 0
-        log.save('[LOG] log out all', {'username': username, 'id': _id})
+        eric = user2eric[username]
+        inform = eric.page[session['page']]
+        if inform['status'] >= 5:
+            inform['status'] = 3
+        elif inform['status'] > 1:
+            inform['status'] -= 1
     except:
         pass
     return redirect(url_for('index'))
 # }}}
-
-@app.route('/restart')# {{{
-def restart():
+@app.route('/refresh')
+def refresh():# {{{
+    return redirect(url_for('index'))
+# }}}
+@app.route('/logout_all')
+def logout_all():# {{{
     try:
-        session['status'] = min(session['status'], 1)
-        log.save('[LOG] restart', session)
+        username = session['username']
+        user2id[username].clear()
+        user_counters[username] = 0
+        log.save('[LOG] log out all', session)
+        session.clear()
+    except:
+        pass
+    return redirect(url_for('index'))
+# }}}
+@app.route('/restart')
+def restart():# {{{
+    try:
+        username = session['username']
+        eric = user2eric[username]
+        inform = eric.page[session['page']]
+        inform['status'] = min(inform['status'], 1)
     except:
         pass
     return redirect(url_for('index'))
@@ -377,9 +363,8 @@ def admin():# {{{
     data = {
         'template_name_or_list': 'admin.html',
         'username': session['username'],
-        'last_operate': last_operate,
-        'cnt': cnt[session['username']],
-        'user_online': len(id2obj),
+        'cnt': user_counters[session['username']],
+        'user_online': len(user2id),
         'logs': logs,
         'st': st,
         'ed': ed,
@@ -390,59 +375,59 @@ def admin():# {{{
     return render_template(**data)
     # }}}
 
-ip_time = 600
-ip_limit = 3000
 
-@app.route('/', methods=['GET', 'POST'])# {{{
-def index():
-    ip = request.remote_addr
-    if ip not in ip_count:
-        ip_count[ip] = []
-    cur = time.time()
-    n = len(ip_count[ip])
-    i = 0
-    while (i < n):
-        if ip_count[ip][i] + ip_time > cur:
-            break
-        i += 1
-    ip_count[ip] = ip_count[ip][i:]
-    ip_count[ip].append(cur)
-    if len(ip_count[ip]) > ip_limit:
-        msg = '[ERR] ip blocked! do not access me with high frequency! wait for %.2f minute(s)!' % (ip_time / 60)
-        log.save(msg)
-        return msg
-
+@app.route('/', methods=['GET', 'POST'])
+def index():# {{{
     if 'username' in session:
-        try:
-            my_obj = id2obj[session['id']]
-        except:
-            session.clear()
-            return login()
         if session['username'] == 'admin':
             return admin()
-        last_operate = get_current_time()
+        if session['id'] not in user2id[session['username']]:
+            session.clear()
+            return login()
         return main()
-    last_operate = get_current_time()
-    return login()
+    else:
+        return login()
 # }}}
 
-@app.route('/login/<string:username>')# {{{
-def _login(username=None):
+@app.route('/login')
+@app.route('/login/<string:username>')
+def _login(username=None):# {{{
     logout()
     return login(username)
 # }}}
 
-def shutdown_server():
+def shutdown_server():# {{{
     func = request.environ.get('werkzeug.server.shutdown')
     if func is None:
         raise RuntimeError('Not running with the Werkzeug Server')
     func()
+# }}}
 
+@app.route('/page')
+@app.route('/page/<int:page>')
+def change_page(page=0):# {{{
+    session['page'] = page
+    return redirect(url_for('index'))
+# }}}
+@app.route('/del_page')
+@app.route('/del_page/<int:page>')
+def del_page(page=-1):# {{{
+    if page >= 0:
+        try:
+            username = session['username']
+            eric = user2eric[username]
+            eric.del_page(page)
+            if page == session['page']:
+                session['page'] = eric.first_page()
+        except:
+            pass
+    return redirect(url_for('index'))
+# }}}
 @app.route('/admin')
 @app.route('/admin/<string:order>')
-def reboot(order=''):
+def reboot(order=''):# {{{
     if 'username' in session and 'id' in session and \
-            session['id'] in id2obj and session['username'] == 'admin':
+            session['id'] in id2eric and session['username'] == 'admin':
         if order == 'reboot':   
             shutdown_server()
             msg = '[LOG] server reboots...'
@@ -456,13 +441,14 @@ def reboot(order=''):
             shutdown_server()
             msg = '[LOG] server starts...'
             log.save(msg, session)
-            os.system('touch running.status')
+            os.system('touch %s'%ucasbus_cfg.running_status_file)
         return msg
     else:
         return redirect(url_for('index'))
-
-if __name__ == '__main__':
+# }}}
+if __name__ == '__main__':# {{{
     host = '0.0.0.0' if args.public else '127.0.0.1'
     app.secret_key = os.urandom(32)
     log.save('[LOG] system starts!', ignore=True)
     app.run(host=host, port=args.port, debug=True if not args.public else False)
+# }}}

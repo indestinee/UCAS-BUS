@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
   <head>
-    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- Bootstrap -->
@@ -41,7 +41,25 @@
             <!-- <li><a href="/undo">undo</a></li> -->
           </ul>
           <ul class="nav navbar-nav navbar-right">
-            <li class='active'><a href="#">{{real_name}}</a></li>
+            <li class='active'><a href="#">{{realname}}</a></li>
+            <li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Page #{{page}}<span class="caret"></span></a>
+              <ul class="dropdown-menu">
+                {% for i in range(total_page) %}
+                  {% if pages[i]['active'] %}
+                    {% if i != page %}
+                    <li><a href="/page/{{i}}">{{i}}</a></li>
+                    {% else %}
+                    <li class='active'><a href="/page/{{i}}">{{i}}</a></li>
+                    {% endif %}
+                  {% endif %}
+                {% endfor %}
+                <li role="separator" class="divider"></li>
+                <li><a href="/page/{{total_page+1}}">new page</a></li>
+                <li role="separator" class="divider"></li>
+                <li><a href="/del_page/{{page}}">del page #{{page}}</a></li>
+              </ul>
+            </li>
             <li><a href="/logout">Log Out</a></li>
             <li><a href="/logout_all">Log Out All</a></li>
           </ul>
@@ -51,12 +69,12 @@
     
 
     <div class="container">
-      {% if status < 2 %}
+      {% if status < 3 %}
       <div class="alert alert-info" role="alert">
         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
         <span aria-hidden="true">&times;</span></button>
-        <p align=center> Hola, amigo <strong>{{real_name}}</strong>! You have <strong>{{cnt}}</strong> account(s) online. </p>
-        <p align=center> Make sure you are in the right account now!</p>
+        <p align=center> Hola, amigo <strong>{{realname}}</strong>! You have <strong>{{cnt}}</strong> account(s) online. </p>
+        <p align=center> Current page No.<strong>{{page}}</strong>, #total page(s): <strong>{{total_page}}</strong>.</p>
       </div>
       {% endif %}
       <div class="jumbotron">
@@ -67,7 +85,8 @@
         {% endif %}
         <div class='row'>
         <hr>
-        {% if status == 0 %}
+
+        {% if not login %}
           <form class="form-inline" action="" method="post" align="center">
             <div class="form-group">
               <a href='/'><img src="{{ url_for('static', filename=certcode_path)}}"></a> 
