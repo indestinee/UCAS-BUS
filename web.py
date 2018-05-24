@@ -196,7 +196,6 @@ def main():
             data['s2'] = 'start at  ' + next_18_time
             data['msg'] = ['[LOG] select date: ' + session['date'][-1],\
                     '[LOG] select route: ' + session['route'][-1]]
-            data['msg'] += ['[WRN] DO NOT login too early before system opens, there may be a time limit for COOCKIES!']
     # }}}
     elif session['status'] == 4:# {{{
         wait = int(session['wait'])
@@ -206,7 +205,6 @@ def main():
                 session['time'] = res
             data['current'] = 'please wait ...'
             cur = time.time()
-            data['msg'] += ['[WRN] DO NOT login too early before system opens, there may be a time limit for COOCKIES!']
             if cur > session['time']:
                 session['status'] += 1
                 session['attemps'] = 0

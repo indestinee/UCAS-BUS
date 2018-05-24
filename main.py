@@ -15,7 +15,7 @@ def auto_recognition_attemps(img, pattern):
     return '%d%d%d%d'%(certcode[0], certcode[1], certcode[2], certcode[3])
 
 try:
-    import cv22
+    import cv2
     pattern = np.array(\
             [cv2.imread('certcode/%d.png'%i, 0) for i in range(10)])
     pattern = pattern.reshape(10, -1).transpose()
