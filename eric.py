@@ -15,6 +15,8 @@ urlcode_re = re.compile('toUtf8(.*?);')
 def keep_alive(eric):
     while True:
         time.sleep(np.random.randint(300, 500)/100)
+        if eric.finished:
+            return
         ret = eric.check()
         if not ret:
             res, msg, data = auto_recognition_attemps(eric, attemps=5)
@@ -34,10 +36,18 @@ class Eric(object):
                 os.path.join(ucasbus_cfg.users_path, username))
         self.spider = Spider(encoding='utf-8')
         self.load()
-
+        self.finished = False
         self.keep_alive = threading.Thread(target=keep_alive, args=(self, ))
         if self.username[:2] == 'ch':
             self.keep_alive.start()
+
+
+
+    def finish(self):
+        self.save()
+        self.finished = True
+        if self.username[:2] == 'ch':
+            self.keep_alive.join()
 
     def check(self):
         response = self.spider.get('http://payment.ucas.ac.cn/NetWorkUI/showPublic')

@@ -530,18 +530,16 @@ def reboot(order):# {{{
     ret, username, identifier = alive()
     if ret:
         for key, eric in user2eric.items():
-            eric.save()
+            eric.finish()
+        shutdown_server()
         if order == 'reboot':   
-            shutdown_server()
             msg = '[LOG] server rebooting...'
             log.save(msg, session)
         elif order == 'shutdown':
-            shutdown_server()
             msg = '[LOG] server shutting down...'
             log.save(msg, session)
             os.system('rm %s' % ucasbus_cfg.running_status_file)
         elif order == 'start':
-            shutdown_server()
             msg = '[LOG] server starting...'
             log.save(msg, session)
             os.system('touch %s'%ucasbus_cfg.running_status_file)
