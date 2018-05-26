@@ -21,6 +21,11 @@ def get_web_args():# {{{
 
 if __name__ == '__main__':# {{{
     args = get_web_args()
+    try:
+        with open(ucasbus_cfg.news, 'r') as f:
+            news = f.read()
+    except:
+        news = None
     running = os.path.isfile(ucasbus_cfg.running_status_file)
     ip_counters = {}
     app = Flask(__name__, static_folder=ucasbus_cfg.static_folder,\
@@ -275,11 +280,11 @@ def login(username=None):# {{{
         eric = user2eric[username]
         if eric.lock:
             return render_template('login.html', \
-                    **{'msg': '[ERR] account locked. contact to admin.'})
+                    **{'msg': '[ERR] account locked. contact to admin.', 'news': news})
         if user_counters[username] == ucasbus_cfg.online_limit \
                 and username != 'admin':
             return render_template('login.html', \
-                    **{'msg': '[ERR] login limit, too many accounts online. contact to admin.'})
+                    **{'msg': '[ERR] login limit, too many accounts online. contact to admin.', 'news': news})
 
 
         user_counters[username] += 1
@@ -298,7 +303,7 @@ def login(username=None):# {{{
         data = {'msg': '[ERR] system is closed!' if not running else (\
                 '[ERR] no such code in data base!' if username \
                 else '[I N] please enter your code to log in!'),
-                'open': 'disabled' if not running else ''}
+                'open': 'disabled' if not running else '', 'news': news}
         return render_template('login.html', **data)
 # }}}
 

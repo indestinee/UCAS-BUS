@@ -1,13 +1,9 @@
-# semi-automatic bus tickets of UCAS ordering
-This project is only coded for sharing knowledge 'how to write a spider/crawl' to a real website. All codes are only for learning, like how to login and post a chart, etc.
+# UCAS BUS
+This project is supposed to be coded only for learning crawling (requests) and website (flask).
+
 ## Website
+<a href='http://ucasbus.ml'>Release Version</a>
 <a href='http://payment.ucas.ac.cn/NetWorkUI/slogin.html'>Target Website</a>
-
-## running examples
-
-watch <a href='https://github.com/indestinee/semi-automatic-bus-tickets-of-UCAS-ordering/blob/master/web_sample.mov?raw=true'>web_sample.mov</a> for details  
-
-watch <a href='https://github.com/indestinee/semi-automatic-bus-tickets-of-UCAS-ordering/blob/master/bash_sample.mov?raw=true'>bash_sample.mov</a> for details
 
 ## requirement
 ```
@@ -65,6 +61,3 @@ One more thing, I didn't test how long the ttl of cookies is, so don't login too
 good luck!
 ```
 
-## knowledge of crawl/spider
-google/baidu it or read some <a href='http://docs.python-requests.org/zh_CN/latest/user/quickstart.html'>python-request docs</a>  
-submodule <a href='https://github.com/indestinee/crawl2'>crawl2</a>

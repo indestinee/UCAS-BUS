@@ -5,6 +5,7 @@ class Config:
     page_limit = 10
     attemps = 5
     logsize = 100
+    news = 'news.txt'
 
     users_path = 'data'
     html_path = 'html_cache'
