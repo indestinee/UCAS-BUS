@@ -571,5 +571,5 @@ if __name__ == '__main__':# {{{
     host = '0.0.0.0' if args.public else '127.0.0.1'
     app.secret_key = os.urandom(32)
     log.save('[LOG] system starts!', ignore=True)
-    app.run(host=host, port=args.port, debug=True if not args.public else False)
+    app.run(host=host, ssl_context=('./key/server.crt', './key/server.key'), port=args.port, debug=True if not args.public else False)
 # }}}

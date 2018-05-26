@@ -10,7 +10,19 @@ install:
 	pip3 install setuptools
 	pip3 install flask
 	pip3 install numpy
+	pip3 install pyopenssl
 	pip3 install opencv-python
+	
+
+	echo 'Generate OpenSSL Key'
+	# mkdir key
+	# cd key
+	# openssl genrsa -des3 -out server.key 1024
+	# openssl req -new -key server.key -out server.csr
+	# cp server.key server.key.org 
+	# openssl rsa -in server.key.org -out server.key
+	# cd ..
+
 clean:
 	rm -rf *cache
 
