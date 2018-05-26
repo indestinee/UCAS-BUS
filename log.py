@@ -1,5 +1,5 @@
 import os, time
-
+from commom import cfg as ucasbus_cfg
 def get_current_time():# {{{
     _date = time.localtime(time.time())
     current_time = '%d-%02d-%02d %02d:%02d:%02d' % (\
@@ -15,6 +15,10 @@ class Log(object):
         self.status = 0
         self.limit = limit
         self.debug = debug
+
+    def finish(self):
+        self.dump()
+
 
     def save(self, log, session={}, ignore=True):
         if not self.debug and not ignore:
@@ -63,7 +67,7 @@ class Log(object):
         self.list.clear()
         self.status = 0   
 
-    def load(self):
+    def load(self, st=0, user=''):
         self.dump()
         while self.status != 0:
             sleep(0.1)
@@ -71,4 +75,5 @@ class Log(object):
         with open(self.path, 'r') as f:
             content = f.read().split('\n')
         self.status = 0
-        return content[::-1][1:]
+        return content[::-1][1+st:1+st+ucasbus_cfg.logsize]
+

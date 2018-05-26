@@ -5,6 +5,5 @@ data
 *cache*
 *swp
 user_information.txt
-static/*
+static
 log
-running.status

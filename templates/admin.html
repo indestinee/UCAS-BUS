@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
   <head>
+    {% if back %}
+    <meta http-equiv="Refresh" content="0; url=/admin">
+    {% endif %}
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -37,9 +40,9 @@
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
           <ul class="nav navbar-nav">
             <li><a href="/logout_all">Log out all admin</a></li>
-            <li><a href="/admin/reboot">Reboot Server</a></li>
-            <li><a href="/admin/start">Start Server</a></li>
-            <li><a href="/admin/shutdown">Shutdown Server</a></li>
+            <li><a href="/admin/system/reboot">Reboot Server</a></li>
+            <li><a href="/admin/system/start">Start Server</a></li>
+            <li><a href="/admin/system/shutdown">Shutdown Server</a></li>
           </ul>
         </div><!-- /.navbar-collapse -->
       </div><!-- /.container-fluid -->
@@ -48,66 +51,135 @@
 
     <div class="container">
       <div class="alert alert-info" role="alert">
-        <p align=center> Hi, <strong>{{username}}</strong>! Server has <strong>{{user_online}}</strong> account(s) online, including <strong> {{cnt}} </strong>admin(s). </p>
-        <p align=center> Last operation time: {{last_operate}}.</p>
-        <p align=center> This operation time: {{current_time}}.</p>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span></button>
+        <p align=center> Hola, <strong>{{username}}</strong>! Server has <strong>{{online}}</strong> admin account(s) online.
 
       </div>
       <div class="jumbotron">
+        {% if order == '' %}
         <div class="row">
           <h3 align="center"><strong> online status</strong>
+          <br/> <br/> <br/>
+          <div class='row'>
+            <div class="col-md-2"><a href='/admin/log'>Logs</a></div>     
+            <!-- <div class="col-md-2"><a href='#'>None</a></div> -->     
+            <!-- <div class="col-md-2"><a href='#'>None</a></div> -->     
+            <!-- <div class="col-md-2"><a href='#'>None</a></div> -->     
+            <!-- <div class="col-md-2"><a href='#'>None</a></div> -->     
+          </div>
+          <br/>
           <div class="alert alert-info" role="alert">
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span></button>
             <br>
             <div class='row'>
               <div class="col-md-2">User</div>
-              <div class="col-md-2">Count</div>     
-              <div class="col-md-8">details</div>     
+              <div class="col-md-2"># Online</div>     
+              <div class="col-md-2"># Pages</div>     
+              <div class="col-md-6">Function</div>     
             </div>
-            {% for user, value in users.items() %}
-              {% if value[0] > 0 %}
+            {% for user in user_list %}
+            <br/>
             <div class='row'>
               <div class="col-md-2">{{user}}</div>
-              <div class="col-md-2">{{value[0]}}</div>     
-              <div class="col-md-8"></div>     
+              <div class="col-md-2">{{inform[user]['online']}}</div>     
+              <div class="col-md-2">{{inform[user]['pages']}}</div>     
+              <div class="col-md-2">
+                <a href='/admin/login/{{user}}'>Log In</a>
+              </div>     
+              <div class="col-md-2">
+                <a href='/admin/logout/{{user}}'>Log Out</a>
+              </div>     
+              <div class="col-md-2">
+                <a href='/admin/delpage/{{user}}'>Del Pages</a>
+              </div>     
             </div>
-                {% for ids in value[1] %}
+            <br/>
             <div class='row'>
-              <div class="col-md-2"></div>
-              <div class="col-md-2"></div>     
-              <div class="col-md-8">{{ids}}</div>     
-            </div>
-                {% endfor %}
+              <div class="col-md-2">{{inform[user]['realname']}}</div>     
+              <div class="col-md-4"></div>
+              <div class="col-md-2">
+                <a href='/admin/code/{{user}}'>Code</a>
+              </div>     
+              <div class="col-md-2">
+                <!-- <a href='/admin/log/{{user}}'>Log</a> -->
+              </div>     
+              {% if not inform[user]['lock'] %}
+              <div class="col-md-2">
+                <a href='/admin/lock/{{user}}'>Lock</a>
+              </div>     
+              {% else %}
+              <div class="col-md-2">
+                <a href='/admin/unlock/{{user}}'>Unlock</a>
+              </div>     
               {% endif %}
-              <br>
+            </div>
+            <br/>
             {% endfor %}
           </div>
         </div>
-        <div class="row">
-          <h3 align="center"><strong> Log File </strong>
+        {% elif order == 'code' %}
+        <h4>
+        <div class='row'>
+          <div class="col-md-2">{{user}}</div>     
+          <div class="col-md-8">{{code}}</div>     
         </div>
-        {% for each in logs[st:ed] %}
-          {% if each[:5] == '[SUC]' %}
-            <div class="alert alert-success" role="alert">
-              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-              <span aria-hidden="true">&times;</span></button>
-          {% elif each[:5] == '[WRN]' %}
-            <div class="alert alert-warning" role="alert">
-              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-              <span aria-hidden="true">&times;</span></button>
-          {% elif each[:5] == '[ERR]' %}
-            <div class="alert alert-danger" role="alert">
-              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-              <span aria-hidden="true">&times;</span></button>
-          {% else %}
-            <div class="alert alert-info" role="alert">
-              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-              <span aria-hidden="true">&times;</span></button>
-          {% endif %}
-              <p align='center'> {{each}}</p>
-            </div>
-        {% endfor %}
+        <br/>
+        <div class='row'>
+          <div class="col-md-2"></div>     
+          <div class="col-md-2"></div>     
+          <div class="col-md-1"><a href=/admin>Return</a></div>     
+          <div class="col-md-2"></div>     
+          <div class="col-md-2"></div>     
+        </div>
+        </h4>
+        {% elif order == 'log' %}
+        <div class="row">
+          <h3 align="center"><strong> Log File</strong>
+        </div>
+        <br/>
+        <div class='row'>
+          <h4>
+            <div class="col-md-3"></div>     
+            <div class="col-md-2"><a href='/admin'>Return</a></div>     
+            <div class="col-md-2"><a href='/admin/log/{{pre}}'>Previous</a></div>     
+            <div class="col-md-2"><a href='/admin/log/{{nxt}}'>Next</a></div>     
+          </h4>
+        </div>
+        <br/>
+          {% for each in logs %}
+            {% if each[:5] == '[SUC]' %}
+        <div class="alert alert-success" role="alert">
+          <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span></button>
+            {% elif each[:5] == '[WRN]' %}
+        <div class="alert alert-warning" role="alert">
+          <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span></button>
+            {% elif each[:5] == '[ERR]' %}
+        <div class="alert alert-danger" role="alert">
+          <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span></button>
+            {% else %}
+        <div class="alert alert-info" role="alert">
+          <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span></button>
+            {% endif %}
+          <p align='center'> {{each}}</p>
+        </div>
+          {% endfor %}
+        <br/>
+        <div class='row'>
+          <h4>
+            <div class="col-md-3"></div>     
+            <div class="col-md-2"><a href='/admin'>Return</a></div>     
+            <div class="col-md-2"><a href='/admin/log/{{pre}}'>Previous</a></div>     
+            <div class="col-md-2"><a href='/admin/log/{{nxt}}'>Next</a></div>     
+          </h4>
+        </div>
+        <br/>
+        {% else %}
+        
+        {% endif %}
       </div>
     </div>
   </body>
