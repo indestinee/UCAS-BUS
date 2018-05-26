@@ -14,7 +14,7 @@ urlcode_re = re.compile('toUtf8(.*?);')
 
 def keep_alive(eric):
     while True:
-        time.sleep(np.random.randint(300, 500)/100)
+        time.sleep(np.random.randint(300, 500))
         if eric.finished:
             return
         ret = eric.check()
@@ -29,7 +29,7 @@ class Eric(object):
     def __init__(self, username):
         self.username = username
         self.page_limit = ucasbus_cfg.page_limit
-        self._login = False
+        self._login = True
         self.cache = Cache(ucasbus_cfg.cache_path)
         self.route_list_cache = Cache(ucasbus_cfg.route_list_path)
         self.user_cache = Cache(\
@@ -38,16 +38,12 @@ class Eric(object):
         self.load()
         self.finished = False
         self.keep_alive = threading.Thread(target=keep_alive, args=(self, ))
-        if self.username[:2] == 'ch':
-            self.keep_alive.start()
-
-
+        # self.keep_alive.start()
 
     def finish(self):
         self.save()
         self.finished = True
-        if self.username[:2] == 'ch':
-            self.keep_alive.join()
+        # self.keep_alive.join()
 
     def check(self):
         response = self.spider.get('http://payment.ucas.ac.cn/NetWorkUI/showPublic')

@@ -16,6 +16,10 @@ class Log(object):
         self.limit = limit
         self.debug = debug
 
+    def finish(self):
+        self.dump()
+
+
     def save(self, log, session={}, ignore=True):
         if not self.debug and not ignore:
             return

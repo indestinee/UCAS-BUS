@@ -1,4 +1,3 @@
-
 while [ 1 == 1 ]
 do 
     rm -rf ./static/*jpg

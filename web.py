@@ -5,7 +5,6 @@ import numpy as np
 
 from eric import Eric
 from tools import *
-from certcode.raw_data import recognition
 from log import Log 
 from certcode.init import *
 from commom import cfg as ucasbus_cfg
@@ -61,8 +60,7 @@ def login_ucas(eric, data): # {{{
             data['certcode_path'] = path
             data['current'] = 'enter certcode and login in payment'
     else:   
-        ret, msg, name = \
-                auto_recognition_attemps(eric, attemps=ucasbus_cfg.attemps)
+        ret, msg, name = auto_recognition_attemps(eric)
         data['msg'] += msg
         if ret == 0:
             return name[0]
@@ -183,10 +181,10 @@ def main(username, identifier, page):# {{{
             h, m = _date.tm_hour, _date.tm_min
 
             data['t1'], data['t2'] = '', ''
-            if h >= 18 and h <= 18:
-                data['t1'] = 'checked'
-            else:
+            if h >= 16 and h < 18:
                 data['t2'] = 'checked'
+            else:
+                data['t1'] = 'checked'
             next_18_time = get_next_18_time()[0] +\
                     ' 18:00:00'
 
@@ -199,18 +197,28 @@ def main(username, identifier, page):# {{{
     elif status == 4:# {{{
         wait = int(inform['wait'])
         if wait == 1:
-            if 'time' not in inform:
-                res = eric.calc_time()
-                inform['time'] = res
+            res = eric.calc_time()
             data['current'] = 'please wait ...'
             cur = time.time()
-            if cur > inform['time']:
+            if cur > res:
                 inform['status'] += 1
                 inform['attemps'] = 0
                 session['msg'] = data['msg']
                 return redirect('/' + str(page))
-            delta = int(inform['time'] - cur)
-            data['fresh'] = max(1, delta//3)
+            delta = int(res - cur)
+            data['fresh'] = min(max(1, delta//3), np.random.randint(300, 500))
+            if eric.check():
+                data['msg'] += ['[SUC] still online']
+            else:
+                data['msg'] += ['[WRN] offline, try to re-login']
+                res, logs, names = auto_recognition_attemps(eric)
+                data['msg'] += logs
+                if res == 0 and names[0] == eric.realname:
+                    data['msg'] += ['[SUC] still online']
+                else:
+                    eric._login = False
+                    session['msg'] = data['msg']
+                    return redirect('/' + str(page))
             eta = ''
             if delta > 3600:
                 eta += '%dh '%(delta//3600)
@@ -233,7 +241,7 @@ def main(username, identifier, page):# {{{
                 inform['attemps']
         result, msg, raw = eric.buy(inform['route'], inform['date'])
         data['msg'] += msg
-        data['fresh'] = np.random.uniform(1.0, 2.0) * 100 
+        data['fresh'] = np.random.uniform(1.0, 2.0)
         if result == 0:
             inform['status'] += 1
             inform['urlcode'] = raw[0]
@@ -536,6 +544,7 @@ def reboot(order):# {{{
     if ret:
         for key, eric in user2eric.items():
             eric.finish()
+        log.finish()
         shutdown_server()
         if order == 'reboot':   
             msg = '[LOG] server rebooting...'

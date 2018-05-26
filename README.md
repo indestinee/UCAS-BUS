@@ -1,6 +1,5 @@
 # UCAS BUS
 This project is supposed to be coded only for learning crawling (requests) and website (flask).
-
 ## Website
 <a href='http://ucasbus.ml'>Release Version</a>
 <a href='http://payment.ucas.ac.cn/NetWorkUI/slogin.html'>Target Website</a>
