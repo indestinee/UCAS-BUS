@@ -276,11 +276,11 @@ def main(username, identifier, page):# {{{
         log.save(each, session)
     return render_template(**data)
 # }}}
-def login(username=None):# {{{
+def login(_username=None):# {{{
     if request.method == 'POST':
-        username = request.form['username']
+        _username = request.form['username']
     
-    username = hash2user[username] if username in hash2user else None
+    username = hash2user[_username] if _username in hash2user else None
     
     if username and (username == 'admin' or running):
         session['username'] = username
@@ -309,7 +309,7 @@ def login(username=None):# {{{
         return redirect('/' + str(page))
     else:
         data = {'msg': '[ERR] system is closed!' if not running else (\
-                '[ERR] no such code in data base!' if username \
+                '[ERR] no such code in data base!' if _username \
                 else '[I N] please enter your code to log in!'),
                 'open': 'disabled' if not running else '', 'news': news}
         return render_template('login.html', **data)
