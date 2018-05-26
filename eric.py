@@ -2,30 +2,69 @@ from commom import cfg as ucasbus_cfg
 from crawl2.spider import *
 from crawl2.utils import *
 import os, time, json
-from tools import hash_func
+import numpy as np
+from tools import *
+import threading
+from certcode.init import *
 
-name_re = re.compile('<li>你好，<a class="c4"  href="#">(.*?)</a></li>')
+name_re = re.compile(
+        '<li>你好，<a class="c4"  href="#">(.*?)</a></li>', re.S)
+
 urlcode_re = re.compile('toUtf8(.*?);')
 
+def keep_alive(eric):
+    while True:
+        time.sleep(np.random.randint(300, 500)/100)
+        ret = eric.check()
+        if not ret:
+            res, msg, data = auto_recognition_attemps(eric, attemps=5)
+            if res == 0 and data[0] == eric.realname:
+                pass
+            else:
+                eric._login = False
+
 class Eric(object):
-    def __init__(self, username, page_limit):
+    def __init__(self, username):
         self.username = username
-        self.realname = 'Unknown'
-        self.page_limit = page_limit
-        self.page = []
+        self.page_limit = ucasbus_cfg.page_limit
         self._login = False
         self.cache = Cache(ucasbus_cfg.cache_path)
         self.route_list_cache = Cache(ucasbus_cfg.route_list_path)
         self.user_cache = Cache(\
                 os.path.join(ucasbus_cfg.users_path, username))
-
         self.spider = Spider(encoding='utf-8')
+        self.load()
+
+        self.keep_alive = threading.Thread(target=keep_alive, args=(self, ))
+        if self.username[:2] == 'ch':
+            self.keep_alive.start()
+
+    def check(self):
+        response = self.spider.get('http://payment.ucas.ac.cn/NetWorkUI/showPublic')
+        if response:
+            return self.realname in response.text
+        return False
+
+    def load(self):
+        self.page = self.user_cache.load('page')
+        if not isinstance(self.page, list):
+            self.page = []
+        self.lock = self.user_cache.load('lock')
+        if self.lock == None or not isinstance(self.lock, bool):
+            self.lock = False
+        self.realname = self.user_cache.load('realname')
+        if not self.realname:
+            self.realname = 'Unknown'
+        
+    def save(self):
+        self.user_cache.save(self.page, 'page')
+        self.user_cache.save(self.lock, 'lock')
+        self.user_cache.save(self.realname, 'realname')
 
     def del_page(self, page):
-        if page >= len(self.page):
-            return 0
-        self.page[page]['active'] = False
-        return 0
+        if page >= 0 and page < len(self.page):
+            self.page[page]['active'] = False
+        return self.touch_page()
 
     def new_page(self):
         n = len(self.page)
@@ -33,18 +72,20 @@ class Eric(object):
             if not self.page[i]['active']:
                 self.page[i] = {'status': 1, 'active': True}
                 return i
-
         if n >= self.page_limit:
             return -1
         self.page.append({'status': 1, 'active': True})
         return n
 
-    def first_page(self):
-        if len(self.page) == 0:
-            return self.new_page()
-        else:
-            return 0
-    
+    def touch_page(self, page=-1):
+        if page >= 0 and page < len(self.page) and \
+                self.page[page]['active']:
+            return page
+        for i in range(len(self.page)):
+            if self.page[i]['active']:
+                return i
+        return self.new_page()
+
     def get_certcode(self, prefix=False):# {{{
         url = 'http://payment.ucas.ac.cn/NetWorkUI/authImage'
         name = hash_func('{}{}'.format(self.username, time.time()))+'.jpg'
@@ -231,7 +272,7 @@ class Eric(object):
         return 0, msg, [text]
     # }}}
     def buy(self, route, date):# {{{
-        msg = ['[msg] start ordering']
+        msg = ['[LOG] start ordering']
         '''
             send order
         '''

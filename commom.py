@@ -1,8 +1,10 @@
 import os
 class Config:
     delta = 90 - 8 # delta of local time and server time
-    online_limit = 100
-    page_limit = 100
+    online_limit = 1
+    page_limit = 10
+    attemps = 5
+    logsize = 100
 
     users_path = 'data'
     html_path = 'html_cache'
