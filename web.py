@@ -205,6 +205,8 @@ def main(username, identifier, page):# {{{
                 inform['attemps'] = 0
                 session['msg'] = data['msg']
                 return redirect('/' + str(page))
+            data['msg'] = ['[LOG] select date: ' + inform['date'][-1],\
+                    '[LOG] select route: ' + inform['route'][-1]]
             delta = int(res - cur)
             data['fresh'] = min(max(1, delta//3), np.random.randint(300, 500))
             if eric.check():
