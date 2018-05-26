@@ -1,1 +1,1 @@
-Hola, this is Version 0.0; :D
+Hola, mi amigo! This is Release Version 0. We have HTTPS now, please access with https://ucasbus.ml instead. We will use trusted cert in next update.

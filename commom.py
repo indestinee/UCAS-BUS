@@ -14,7 +14,7 @@ class Config:
     running_status_file = os.path.join(cache_path, 'running.status')
 
     static_folder='static'
-    static_url_path='/static'
+    static_url_path=''
     
     log_path = 'log'
     
