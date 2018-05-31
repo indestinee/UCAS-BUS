@@ -225,7 +225,7 @@ def main(username, identifier, page):# {{{
             data['msg'] += ['[LOG] select date: ' + inform['date'][-1],\
                     '[LOG] select route: ' + inform['route'][-1]]
             delta = int(res - cur)
-            data['fresh'] = min(max(1, delta//3), np.random.randint(300, 500)) * 10
+            data['fresh'] = min(max(1, delta//3), np.random.randint(300, 500))
             eta = ''
             if delta > 3600:
                 eta += '%dh '%(delta//3600)
