@@ -1,6 +1,6 @@
                     Version 0.1
 
-    Hola, mi amigo! There are reviews of this version:
+    Hola, mi amigo! Here are some reviews of this Version 0.x:
         1. We have HTTPS now, please access 
             with https://ucasbus.ml for your safety.
         2. Multi-page.
