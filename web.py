@@ -19,14 +19,19 @@ def get_web_args():# {{{
 # }}}
 
 if __name__ == '__main__':# {{{
+    print('[LOG] preparing system..')
     args = get_web_args()
-    try:
+    news, error_list = None, []
+    if os.path.isfile(ucasbus_cfg.news):
         with open(ucasbus_cfg.news, 'r') as f:
             news = f.read()
-    except:
-        news = None
+    if os.path.isfile(ucasbus_cfg.error_list):
+        with open (ucasbus_cfg.error_list, 'r') as f:
+            data = f.read().split('\n')
+        error_list = [each.split('|') for each in data]
+
     running = os.path.isfile(ucasbus_cfg.running_status_file)
-    ip_counters = {}
+    
     app = Flask(__name__, static_folder=ucasbus_cfg.static_folder,\
             static_url_path=ucasbus_cfg.static_url_path)
 
@@ -37,17 +42,16 @@ if __name__ == '__main__':# {{{
     user2id = {user: set() for user in users}
     user2eric = {user: Eric(user) for user in users}
 
-    current_time = get_current_time(True)
-    log = Log(os.path.join(ucasbus_cfg.log_path, current_time), \
-            100, debug=True)
-
+    current_time = get_current_time(True).split(' ')[0]
+    log_path = os.path.join(ucasbus_cfg.log_path, current_time)
+    log = Log(log_path, 100, debug=True)
+    print('[LOG] touch log file %s' % log_path)
     if not args.public:
         hash2user['123'] = hash2user[hash_func(users[0])]
-
-    with open('user_information.txt', 'w') as f:
-        for key, value in hash2user.items():
-            f.write('%s: %s\n' % (value, key))
+        print('[LOG] debuging mode, code 123 are open')
+    print('[LOG] normal mode')
 # }}}
+
 def login_ucas(eric, data): # {{{
     if request.method == 'POST':
         certcode = request.form['certcode']
@@ -77,8 +81,10 @@ def main(username, identifier, page):# {{{
     eric = user2eric[username]
     realname = eric.realname
     n_page = eric.touch_page(page)
+    if 'msg' not in session:
+        session['msg'] = []
     if n_page != page:
-        session['msg'] = ['[ERR] no such page id']
+        session['msg'] += ['[ERR] no such page id']
         return redirect('/' + str(n_page))
     
     inform = eric.page[page]
@@ -96,34 +102,28 @@ def main(username, identifier, page):# {{{
         'page': page,
     }
     
-    if 'msg' in session:
-        data['msg'] = session['msg']
-        session.pop('msg')
-    else:
-        data['msg'] = []
+    data['msg'] = session['msg']
+    session['msg'] = []
     # }}}
 
-    if eric._login:
-        if eric.check():
-            # data['msg'] += ['[SUC] still online']
-            pass
+    if eric._login and not eric.check():
+        data['msg'] += ['[WRN] offline, try to re-login']
+        res, logs, names = auto_recognition_attemps(eric)
+        data['msg'] += logs
+        if res == 0 and names[0] == eric.realname:
+            data['msg'] += ['[SUC] get online']
+            # session['msg'] += data['msg']
+            # return redirect('/' + str(page))
         else:
-            data['msg'] += ['[WRN] offline, try to re-login']
-            res, logs, names = auto_recognition_attemps(eric)
-            data['msg'] += logs
-            if res == 0 and names[0] == eric.realname:
-                data['msg'] += ['[SUC] get online']
-                session['msg'] = data['msg']
-                return redirect('/' + str(page))
-            else:
-                eric._login = False
-                session['msg'] = data['msg']
-                return redirect('/' + str(page))
+            data['msg'] += ['[ERR] session may be broken, auto recognition failed! please contact to the admin!']
+            eric._login = False
+            session['msg'] += data['msg']
+            return redirect('/' + str(page))
 
     if not eric._login:# {{{
         ret = login_ucas(eric, data)
         if ret and (ret == eric.realname or eric.realname == 'Unknown'):
-            session['msg'] = data['msg']
+            session['msg'] += data['msg']
             eric._login = True
             eric.realname = ret
             return redirect('/' + str(page))
@@ -131,7 +131,7 @@ def main(username, identifier, page):# {{{
     elif status == 1:# {{{
         if request.method == 'POST':
             date = request.form['date']
-            session['msg'] = data['msg']
+            session['msg'] += data['msg']
             inform['cache'] = True if 'cache' in request.form else False
             inform['date'] = date.split('|')
             inform['status'] += 1
@@ -147,7 +147,7 @@ def main(username, identifier, page):# {{{
             route = request.form['route']
             inform['route'] = route.split('|')
             inform['status'] += 1
-            session['msg'] = data['msg']
+            session['msg'] += data['msg']
             return redirect('/' + str(page))
         else:
             data['current'] = 'select route'
@@ -180,6 +180,9 @@ def main(username, identifier, page):# {{{
                 data['route_list'] = route_list
             else:
                 data['route_list'] = [['0', '[ERR] request route list error! payment@ucas may not open', 'disabled']]
+                data['msg'] += ['[ERR] code %d: request route list error! payment@ucas may not open' % ret]
+                data['error_list'] = error_list
+        
         
     # }}}
     elif status == 3:# {{{
@@ -210,13 +213,19 @@ def main(username, identifier, page):# {{{
             data['s2'] = 'start at ' + next_18_time + ' server time'
             data['msg'] += ['[LOG] select date: ' + inform['date'][-1],\
                     '[LOG] select route: ' + inform['route'][-1]]
+            inform['ttime'] = None
     # }}}
     elif status == 4:# {{{
         wait = int(inform['wait'])
         if wait == 1:
-            res = eric.calc_time()
+            cur = time.time() 
             data['current'] = 'please wait ...'
-            cur = time.time()
+            if inform['ttime']:
+                res = inform['ttime']
+            else:
+                res = eric.calc_time()
+                inform['ttime'] = res
+
             if cur > res:
                 inform['status'] += 1
                 inform['attemps'] = 0
@@ -224,6 +233,7 @@ def main(username, identifier, page):# {{{
                 return redirect('/' + str(page))
             data['msg'] += ['[LOG] select date: ' + inform['date'][-1],\
                     '[LOG] select route: ' + inform['route'][-1]]
+
             delta = int(res - cur)
             data['fresh'] = min(max(1, delta//3), np.random.randint(300, 500))
             eta = ''
@@ -239,7 +249,7 @@ def main(username, identifier, page):# {{{
         else:
             inform['status'] += 1
             inform['attemps'] = 0
-            session['msg'] = data['msg']
+            session['msg'] += data['msg']
             return redirect('/' + str(page))
 # }}}
     elif status == 5:# {{{
@@ -252,18 +262,24 @@ def main(username, identifier, page):# {{{
         if result == 0:
             inform['status'] += 1
             inform['urlcode'] = raw[0]
-            session['msg'] = data['msg']
+            session['msg'] += data['msg']
             return redirect('/' + str(page))
         else:
-
+            ret = data['msg'][-1]
+            data['msg'] += ['[ERR] code %d' % result]
+            data['error_list'] = error_list
             try:
-                ret = data['msg'][-1]
-                s = '[ERR] full return '
-                if ret[:len(s)] == s:
-                    ret = ret[len(s):]
+                l = ret.find('{')
+                r = ret[::-1].find('}')
+                r = None if r == 0 else -r
+                if l != -1 and r != -1:
+                    ret = ret[l:r]
                 ret = json.loads(ret.replace('\'', '"'))
                 if ret['returnmsg'] in ['业务逻辑判断失败[用户当天该路线预约次数超过限制，禁止预约]']:
-                    data['fresh'] = 0xffffffff
+                    data['fresh'] = None
+                else:
+                    pass
+
             except:
                 pass
 
@@ -274,6 +290,9 @@ def main(username, identifier, page):# {{{
         data['wechat'] = inform['urlcode']
         data['msg'] += ['[SUC] get QR code successfully!', \
                 '[LOG] please scan the QR code with wechat or open this {} in wechat'.format(inform['urlcode'])]
+        data['msg'] += ['[LOG] select date: ' + inform['date'][-1],\
+                '[LOG] select route: ' + inform['route'][-1]]
+
 # }}}
     else:# {{{
         data['msg'] = ['[ERR] no such status', '[WRN] system may have large bugs!']
@@ -575,5 +594,6 @@ if __name__ == '__main__':# {{{
     host = '0.0.0.0' if args.public else '127.0.0.1'
     app.secret_key = os.urandom(32)
     log.save('[LOG] system starts!', ignore=True)
+    print('[LOG] opening system!')
     app.run(host=host, port=args.port, debug=True if not args.public else False)
 # }}}

@@ -1,6 +1,6 @@
 from crawl2.spider import *
 from crawl2.utils import *
-from commom import sub_cfg
+from commom import cfg as sub_cfg
 import time, os, argparse
 import numpy as np
 # from IPython import embed
@@ -152,10 +152,10 @@ if __name__ == '__main__':
     args = get_args()
     spider = Spider()
 
-    if not os.path.isdir(sub_cfg.user_save_file):
-        os.mkdir(sub_cfg.user_save_file)
+    if not os.path.isdir(sub_cfg.users_path):
+        os.mkdir(sub_cfg.users_path)
 
-    user_file = os.path.join(sub_cfg.user_save_file, args.user)
+    user_file = os.path.join(sub_cfg.users_path, args.user)
     
 
     while not spider.login(

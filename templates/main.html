@@ -32,7 +32,11 @@
           </button>
           <a class="navbar-brand" href="/{{page}}">Bus Ticket</a>
           <a class="navbar-brand" href="/undo/{{page}}">Undo</a>
-          <ul class="nav navbar-nav navbar-right">
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+          <ul class="nav navbar-nav">
             <li class="dropdown">
               <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Page #{{page}}<span class="caret"></span></a>
               <ul class="dropdown-menu">
@@ -52,12 +56,6 @@
                 <li><a href="/del_all_page">del all pages</a></li>
               </ul>
             </li>
-          </ul>
-        </div>
-
-        <!-- Collect the nav links, forms, and other content for toggling -->
-        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-          <ul class="nav navbar-nav">
             <li><a href="/{{page}}">Reload<span class="sr-only">(current)</span></a></li>
             <li><a href="/restart/{{page}}">Restart</a></li>
           </ul>
@@ -149,9 +147,13 @@
         {% elif status == 4 %}
           <h4 align='center'>time: {{cur_time}} <h4>
           <h4 align='center'>starting in {{eta}} later ...</h4>
+          {% if fresh %}
           <meta http-equiv="refresh" content="{{fresh}}">
+          {% endif %}
         {% elif status == 5 %}
+          {% if fresh %}
           <meta http-equiv="refresh" content="{{fresh}}">
+          {% endif %}
         {% elif status == 6 %}
           <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
           <p align=center><a href={{wechat}}>从微信打开</a></p>
@@ -210,6 +212,7 @@
             </div>
             <div class="col-md-4"></div>
           </div>
+         
           <!--主体 end-->
 
         {% endif %}
@@ -218,25 +221,39 @@
       {% if msg %}
         {% for each in msg %}
           {% if each[:5] == '[SUC]' %}
-            <div class="alert alert-success" role="alert">
-              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-              <span aria-hidden="true">&times;</span></button>
+      <div class="alert alert-success" role="alert">
           {% elif each[:5] == '[WRN]' %}
-            <div class="alert alert-warning" role="alert">
-              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-              <span aria-hidden="true">&times;</span></button>
+      <div class="alert alert-warning" role="alert">
           {% elif each[:5] == '[ERR]' %}
-            <div class="alert alert-danger" role="alert">
-              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-              <span aria-hidden="true">&times;</span></button>
+      <div class="alert alert-danger" role="alert">
           {% else %}
-            <div class="alert alert-info" role="alert">
-              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-              <span aria-hidden="true">&times;</span></button>
+      <div class="alert alert-info" role="alert">
           {% endif %}
-              <p align='center'> {{each}}</p>
-            </div>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <p align='center'> {{each}}</p>
+      </div>
         {% endfor %}
+        {% if error_list %}
+      <div class="alert alert-info" role="alert">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <div class="row">
+          <div class="col-md-1">Code</div>
+          <div class="col-md-6">Description</div>
+          <div class="col-md-3">Advice</div>
+        </div>
+          {% for each in error_list %}
+        <div class="row">
+          <div class="col-md-1">{{each[0]}}</div>
+          <div class="col-md-6">{{each[1]}}</div>
+          <div class="col-md-3">{{each[2]}}</div>
+        </div>
+          {% endfor %}
+      </div>
+        {% endif %}
       {% endif %}
     </div>
   </body>

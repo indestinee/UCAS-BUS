@@ -1,5 +1,9 @@
 # UCAS BUS
-This project is supposed to be coded only for learning crawling (requests) and website (flask).
+
+## Version 0.1
+
+This project is supposed to be coded only for learning crawling (requests) and building a website (flask).
+
 ## Website
 <a href='http://ucasbus.ml'>Release Version</a>
 <a href='http://payment.ucas.ac.cn/NetWorkUI/slogin.html'>Target Website</a>
@@ -11,15 +15,13 @@ This project is supposed to be coded only for learning crawling (requests) and w
 3. make # if you need to use cmd in Makefile
 4. opencv # to show certcode
 5. flask # webversion
-
-(1) must be satisfied.
 ```
 
 ## before you run
 ```
 $ git submodule init
 $ git submodule update
-# if you don't have git, download https://github.com/indestinee/crawl2 to crawl2/
+# make install for requirements if need
 ```
 
 ## **WARNING**

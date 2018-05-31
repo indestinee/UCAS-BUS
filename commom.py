@@ -6,6 +6,7 @@ class Config:
     attemps = 5
     logsize = 100
     news = 'news.txt'
+    error_list = 'error_list.txt'
 
     users_path = 'data'
     html_path = 'html_cache'

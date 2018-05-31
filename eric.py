@@ -151,8 +151,11 @@ class Eric(object):
             self.route_list_cache.save(route_list, date)
         return 0, msg, [route_list]
     # }}}
-    def calc_time(self, *, delta=ucasbus_cfg.delta, timezone=8):# {{{
+    def calc_time(self, *, \
+            delta=ucasbus_cfg.delta, timezone=8, debug=None):# {{{
         cur = time.time()
+        if debug:
+            return debug + cur
         t = 18 * 3600 + delta - (cur + timezone * 3600) % 86400
         if t < 0:
             t += 86400
@@ -165,7 +168,7 @@ class Eric(object):
             return 0, msg
         else:
             names = json.dumps(data)
-            msg += ['[ERR] failed at #{}: \'{}\' found in <name> is not equal to {}'.format(step, names, self.realname)]
+            msg += ['[ERR] failed at step #{}: \'{}\' found in <name> is not equal to {}'.format(step, names, self.realname)]
             return step * 10 + 2, msg
     # }}}
     def send_order(self, route, date):# {{{
@@ -182,26 +185,26 @@ class Eric(object):
         response = self.spider.post(url, data)
 
         if not response:
-            msg += ['[ERR] failed at #1: <send order> server does not response in time']
+            msg += ['[ERR] failed at step #1: <send order> server does not response in time']
             return 11, msg, None
         try:
             information = response.json()
         except:
-            msg += ['[ERR] failed at #1: <json> response is not json']
+            msg += ['[ERR] failed at step #1: <json> response is not json']
             return 13, msg, None
 
         try:
             ret = information['returncode']
             orderno = information['payOrderTrade']['orderno']
-            msg += ['[SUC] #1: orderno={}, order={}'\
+            msg += ['[SUC] step #1: orderno={}, order={}'\
                     .format(orderno, data)]
             return 0, msg, [orderno]
         except:
             msg += ['[ERR] returncode or payOrderTrade->orderno not found in json!']
-            msg += ['[ERR] #1: return json = {}'.format(information)]
+            msg += ['[ERR] step #1: return json = {}'.format(information)]
             return 14, msg, None
 
-        msg += ['[ERR] #1: return json = {}'.format(information)]
+        msg += ['[ERR] step #1: return json = {}'.format(information)]
         return 19, msg, None
     # }}}
     def send_orderno(self, orderno):# {{{
@@ -218,7 +221,7 @@ class Eric(object):
         response = self.spider.post(url, data=data)
 
         if not response:
-            msg += ['[ERR] failed at #2: <send orderno> server does not response in time']
+            msg += ['[ERR] failed at step #2: <send orderno> server does not response in time']
             return 21, msg, None
         
         ret, log = self.check_realname(2, response)
@@ -234,7 +237,7 @@ class Eric(object):
         response = self.spider.get(url)
 
         if not response:
-            msg += ['[ERR] failed at #3: <request wechat urlcode> server does not response in time']
+            msg += ['[ERR] failed at step #3: <request wechat urlcode> server does not response in time']
             return 31, msg, None
 
         ret, log = self.check_realname(3, response)

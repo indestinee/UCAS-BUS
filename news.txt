@@ -1,1 +1,10 @@
-Hola, mi amigo! This is Release Version 0. We have HTTPS now, please access with https://ucasbus.ml instead. We will use trusted cert in next update.
+                    Version 0.1
+
+    Hola, mi amigo! There are reviews of this version:
+        1. We have HTTPS now, please access 
+            with https://ucasbus.ml for your safety.
+        2. Multi-page.
+        3. Keep online.
+    Gracias for your support!
+                                                    -- admin
+                                                    2018年05月31日
