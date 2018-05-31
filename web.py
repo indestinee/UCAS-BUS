@@ -584,7 +584,7 @@ def reboot(order):# {{{
             os.system('touch %s'%ucasbus_cfg.running_status_file)
         else:
             return redirect('/admin')
-        return msg
+        return render_template('error.html')
     else:
         session.clear()
         return redirect(url_for('index'))
