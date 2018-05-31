@@ -105,7 +105,7 @@ def main(username, identifier, page):# {{{
 
     if eric._login:
         if eric.check():
-            data['msg'] += ['[SUC] still online']
+            # data['msg'] += ['[SUC] still online']
             pass
         else:
             data['msg'] += ['[WRN] offline, try to re-login']
