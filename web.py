@@ -103,6 +103,23 @@ def main(username, identifier, page):# {{{
         data['msg'] = []
     # }}}
 
+    if eric._login:
+        if eric.check():
+            data['msg'] += ['[SUC] still online']
+            pass
+        else:
+            data['msg'] += ['[WRN] offline, try to re-login']
+            res, logs, names = auto_recognition_attemps(eric)
+            data['msg'] += logs
+            if res == 0 and names[0] == eric.realname:
+                data['msg'] += ['[SUC] get online']
+                session['msg'] = data['msg']
+                return redirect('/' + str(page))
+            else:
+                eric._login = False
+                session['msg'] = data['msg']
+                return redirect('/' + str(page))
+
     if not eric._login:# {{{
         ret = login_ucas(eric, data)
         if ret and (ret == eric.realname or eric.realname == 'Unknown'):
@@ -191,7 +208,7 @@ def main(username, identifier, page):# {{{
             current_time = get_current_time()
             data['s1'] = 'start at ' + current_time + ' current time'
             data['s2'] = 'start at ' + next_18_time + ' server time'
-            data['msg'] = ['[LOG] select date: ' + inform['date'][-1],\
+            data['msg'] += ['[LOG] select date: ' + inform['date'][-1],\
                     '[LOG] select route: ' + inform['route'][-1]]
     # }}}
     elif status == 4:# {{{
@@ -205,22 +222,10 @@ def main(username, identifier, page):# {{{
                 inform['attemps'] = 0
                 session['msg'] = data['msg']
                 return redirect('/' + str(page))
-            data['msg'] = ['[LOG] select date: ' + inform['date'][-1],\
+            data['msg'] += ['[LOG] select date: ' + inform['date'][-1],\
                     '[LOG] select route: ' + inform['route'][-1]]
             delta = int(res - cur)
-            data['fresh'] = min(max(1, delta//3), np.random.randint(300, 500))
-            if eric.check():
-                data['msg'] += ['[SUC] still online']
-            else:
-                data['msg'] += ['[WRN] offline, try to re-login']
-                res, logs, names = auto_recognition_attemps(eric)
-                data['msg'] += logs
-                if res == 0 and names[0] == eric.realname:
-                    data['msg'] += ['[SUC] still online']
-                else:
-                    eric._login = False
-                    session['msg'] = data['msg']
-                    return redirect('/' + str(page))
+            data['fresh'] = min(max(1, delta//3), np.random.randint(300, 500)) * 10
             eta = ''
             if delta > 3600:
                 eta += '%dh '%(delta//3600)
@@ -250,8 +255,7 @@ def main(username, identifier, page):# {{{
             session['msg'] = data['msg']
             return redirect('/' + str(page))
         else:
-            if result % 10 == 3:
-                eric._login = False
+
             try:
                 ret = data['msg'][-1]
                 s = '[ERR] full return '
