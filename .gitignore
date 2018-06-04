@@ -8,3 +8,4 @@ user_information.txt
 static
 log
 key
+certbot/certbot-auto
