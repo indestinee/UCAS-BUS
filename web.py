@@ -14,6 +14,7 @@ def get_web_args():# {{{
     parser = argparse.ArgumentParser(description='bus ticket')
     parser.add_argument('--public', action='store_true', default=False)
     parser.add_argument('--port', default=1234, type=int)
+    parser.add_argument('--host', default='127.0.0.1', type=str)
     args = parser.parse_args()
     return args
 # }}}
@@ -591,9 +592,8 @@ def reboot(order):# {{{
 # }}}
 
 if __name__ == '__main__':# {{{
-    host = '0.0.0.0' if args.public else '127.0.0.1'
     app.secret_key = os.urandom(32)
     log.save('[LOG] system starts!', ignore=True)
     print('[LOG] opening system!')
-    app.run(host=host, port=args.port, debug=True if not args.public else False)
+    app.run(host=args.host, port=args.port, debug=True if not args.public else False)
 # }}}
