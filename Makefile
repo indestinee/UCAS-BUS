@@ -5,6 +5,9 @@ web:
 	python3 web.py
 
 install:
+	mkdir data
+	mkdir cache
+	mkdir log
 	git submodule init
 	git submodule update
 	pip3 install requests
