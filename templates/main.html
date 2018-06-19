@@ -156,7 +156,8 @@
           {% endif %}
         {% elif status == 6 %}
           <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-          <p align=center>wechat code:{{wechat}}</p>
+          <p align=center>wechat code</p>
+          <p align=center>{{wechat}}</p>
           <script src="/jQuery 1.11.1.js" type="text/javascript"></script>
           <script language="javascript" type="text/javascript" src="/jquery.qrcode.min.js"></script>
           <script type="text/javascript">
@@ -178,9 +179,7 @@
                 $("#errorMessage").html(weixinMessage);
                 $("#errorDiv").css("display","block");
               }
-
               //var str = toUtf8('??');
-
             })
 
             function toUtf8(str) {
