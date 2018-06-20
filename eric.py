@@ -111,16 +111,16 @@ class Eric(object):
         response = self.spider.post(url, data=data)
 
         if not response:
-            msg += ['[ERR] failed at login: server does not response in time']
+            msg += ['[ERR] 登录失败，服务器未响应。']
             return 1, msg, None
 
         name = name_re.findall(response.text)
         if len(name) == 0:
-            msg += ['[ERR] getting name failed (probably logining failed, wrong certcode)!']
+            msg += ['[ERR] 登录失败，信息错误。']
             return 9, msg, None
         else:
             name = name[0]
-            msg += ['[SUC] %s logining successfully!' % name]
+            msg += ['[SUC] %s 成功登录！' % name]
             return 0, msg, [name]
     # }}}
     def get_route(self, date, cache):# {{{
@@ -134,17 +134,17 @@ class Eric(object):
             }
             response = self.spider.post(url, data=data)
             if not response:
-                msg += ['[ERR] failed at get route: server does not response in time']
+                msg += ['[ERR] 获取路线失败，服务器未响应。']
                 return 1, msg, None
             try:
                 data = response.json()
             except:
-                msg += ['[ERR] failed at get route: <json> response is not json']
+                msg += ['[ERR] 获取路线失败，返回结果无法 json 化。']
                 return 3, msg, None
             try:    
                 route_list = data['routelist']
             except:
-                msg += ['[ERR] failed at get route: routelist is not a key']
+                msg += ['[ERR] 获取路线失败，未找到 routelist 。']
                 msg += ['[ERR] json = {}'.format(data)]
                 return 4, msg, None
 
@@ -168,7 +168,7 @@ class Eric(object):
             return 0, msg
         else:
             names = json.dumps(data)
-            msg += ['[ERR] failed at step #{}: \'{}\' found in <name> is not equal to {}'.format(step, names, self.realname)]
+            msg += ['[ERR] #{}: \'{}\' 用户不匹配 {}'.format(step, names, self.realname)]
             return step * 10 + 2, msg
     # }}}
     def send_order(self, route, date):# {{{
@@ -185,26 +185,25 @@ class Eric(object):
         response = self.spider.post(url, data)
 
         if not response:
-            msg += ['[ERR] failed at step #1: <send order> server does not response in time']
+            msg += ['[ERR] #1: 服务器未响应。']
             return 11, msg, None
         try:
             information = response.json()
         except:
-            msg += ['[ERR] failed at step #1: <json> response is not json']
+            msg += ['[ERR] #1: 返回结果无法 json 化。']
             return 13, msg, None
 
         try:
             ret = information['returncode']
             orderno = information['payOrderTrade']['orderno']
-            msg += ['[SUC] step #1: orderno={}, order={}'\
-                    .format(orderno, data)]
+            msg += ['[SUC] #1: 获取订单号[{}]， 订单信息：{}, {}, {}'.format(orderno, data['bookingdate'][0], data['routecode'][0], data['tel'])]
             return 0, msg, [orderno]
         except:
-            msg += ['[ERR] returncode or payOrderTrade->orderno not found in json!']
-            msg += ['[ERR] step #1: return json = {}'.format(information)]
+            msg += ['[ERR] #1:  未找到 returncode 或 payOrderTrade->orderno 字段!']
+            msg += ['[ERR] #1: json={}'.format(information)]
             return 14, msg, None
 
-        msg += ['[ERR] step #1: return json = {}'.format(information)]
+        msg += ['[ERR] step #1: json={}'.format(information)]
         return 19, msg, None
     # }}}
     def send_orderno(self, orderno):# {{{
@@ -221,14 +220,14 @@ class Eric(object):
         response = self.spider.post(url, data=data)
 
         if not response:
-            msg += ['[ERR] failed at step #2: <send orderno> server does not response in time']
+            msg += ['[ERR] #2:  服务器未响应。']
             return 21, msg, None
         
         ret, log = self.check_realname(2, response)
         msg += log
         if ret != 0:
             return ret, msg, None
-        msg += ['[SUC] orderno({}) posted!'.format(orderno)]
+        # msg += ['[SUC] #2: 成功发送订单: {}！'.format(orderno)]
         return 0, msg, None
     # }}}
     def request_wechat_urlcode(self, orderno):# {{{
@@ -237,7 +236,7 @@ class Eric(object):
         response = self.spider.get(url)
 
         if not response:
-            msg += ['[ERR] failed at step #3: <request wechat urlcode> server does not response in time']
+            msg += ['[ERR] #3: 服务器未响应！']
             return 31, msg, None
 
         ret, log = self.check_realname(3, response)
@@ -248,10 +247,9 @@ class Eric(object):
         try:
             urlcode = urlcode_re.findall(response.text)[0][2:-2]
         except:
-            msg += ['[ERR] failed at #3: <request wechat urlcode> urlcode is missing in response']
+            msg += ['[ERR] #3: urlcode 字段缺失！']
             return 35, msg, None
-        msg += ['[SUC] urlcode({}) got from orderno({})'\
-                .format(urlcode, orderno)]
+        msg += ['[SUC] #3: 成功获从订单[{}]中获取urlcode[{}]！'.format(orderno, urlcode)]
         return 0, msg, [urlcode]
     # }}}
     def get_ucas_qrcode(self, urlcode):# {{{
@@ -268,7 +266,7 @@ class Eric(object):
         response = self.spider.get(url)
 
         if not response:
-            msg += ['[ERR] failed at #4: <get ucas qrcode> server does not response in time']
+            msg += ['[ERR] #4: 服务器未响应！']
             return 41, msg, None
 
         ret, log = self.check_realname(4, response)
@@ -277,11 +275,11 @@ class Eric(object):
             return ret, msg, None
 
         text = response.text.replace('src="/NetWork', 'src="http://payment.ucas.ac.cn/NetWork')
-        msg += ['[SUC] html got from urlcode({})'.format(urlcode)]
+        msg += ['[SUC] 成功生成二维码，根据urlcode[{}]！'.format(urlcode)]
         return 0, msg, [text]
     # }}}
     def buy(self, route, date):# {{{
-        msg = ['[LOG] start ordering']
+        msg = ['[LOG] 开始购票。']
         '''
             send order
         '''

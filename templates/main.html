@@ -30,40 +30,39 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="/{{page}}">乌卡斯巴斯</a>
-          <a class="navbar-brand" href="/undo/{{page}}">Undo</a>
+          <a class="navbar-brand" href="">乌卡斯巴斯</a>
+          <a class="navbar-brand" href="/undo/{{page}}">返回上一步</a>
         </div>
 
         <!-- Collect the nav links, forms, and other content for toggling -->
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
           <ul class="nav navbar-nav">
+            <li><a href="/restart/{{page}}">重新开始</a></li>
             <li class="dropdown">
-              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Page #{{page}}<span class="caret"></span></a>
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">当前页#{{page}}<span class="caret"></span></a>
               <ul class="dropdown-menu">
               {% for i in range(total_page) %}
                 {% if pages[i]['active'] %}
                   {% if i != page %}
                 <li><a href="/{{i}}">{{i}}</a></li>
                   {% else %}
-                <li class='disabled'><a href="#">{{i}}</a></li>
+                <li class='disabled'><a href="#"><u>{{i}} (当前)</u></a></li>
                   {% endif %}
                 {% endif %}
               {% endfor %}
                 <li role="separator" class="divider"></li>
-                <li><a href="/new_page/{{page}}">new page</a></li>
+                <li><a href="/new_page/{{page}}" target='_blank'>新建页</a></li>
                 <li role="separator" class="divider"></li>
-                <li><a href="/del_page/{{page}}">del page #{{page}}</a></li>
-                <li><a href="/del_all_page">del all pages</a></li>
+                <li><a href="/del_page/{{page}}">删除当前页</a></li>
+                <li><a href="/del_other_page/{{page}}">删除其它页</a></li>
+                <li><a href="/del_all_page">删除全部页</a></li>
               </ul>
             </li>
-            <li><a href="/{{page}}">Reload<span class="sr-only">(current)</span></a></li>
-            <li><a href="/restart/{{page}}">Restart</a></li>
           </ul>
           <ul class="nav navbar-nav navbar-right">
-            <li class='active'><a href="#">{{realname}}</a></li>
-            
-            <li><a href="/logout">Log Out</a></li>
-            <li><a href="/logout_all">Log Out All</a></li>
+            <li class='active'><a href="#"><strong>{{realname}}</strong></a></li>
+            <li><a href="/logout">注销</a></li>
+            <li><a href="/logout_all">所有终端下线</a></li>
           </ul>
         </div><!-- /.navbar-collapse -->
       </div><!-- /.container-fluid -->
@@ -75,8 +74,8 @@
       <div class="alert alert-info" role="alert">
         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
         <span aria-hidden="true">&times;</span></button>
-        <p align=center> Hola, amigo <strong>{{realname}}</strong>! You have <strong>{{cnt}}</strong> account(s) online. </p>
-        <p align=center> Current page No.<strong>{{page}}</strong>, #total page(s): <strong>{{total_page}}</strong>.</p>
+        <p align=center>用户“<strong>{{realname}}</strong>”当前有 <strong>{{cnt}}</strong> 个终端同时在线。</p>
+        <p align=center>当前所在页<strong>#{{page}}</strong>，存在总页数 <strong>{{total_page}}</strong> 。</p>
       </div>
       {% endif %}
       <div class="jumbotron">
@@ -91,7 +90,7 @@
         {% if not login %}
           <form class="form-inline" action="" method="post" align="center">
             <div class="form-group">
-              <a href='/{{page}}'><img src="{{ url_for('static', filename=certcode_path)}}"></a> 
+              <a href='/{{page}}'><img src="{{url_for('static', filename=certcode_path)}}"></a> 
               <div class="form-group">
                 <input type="text" class="form-control" placeholder="cert code" name="certcode">
               </div>
@@ -110,12 +109,12 @@
             {% endfor %}
             <div class="checkbox">
               <label>
-                <input type="checkbox" checked name='cache'> cache first (speed up)
+                <input type="checkbox" checked name='cache'>使用缓存（加速访问）
               </label>
             </div>
 
             <hr>
-            <button type="submit" class="btn btn-default">Submit</button>
+            <button type="submit" class="btn btn-default">提交</button>
           </form>
         {% elif status == 2 %}
           <form action="" method="post" id="route" align='center'>
@@ -127,7 +126,7 @@
             </div>
             {% endfor %}
             <hr>
-            <button type="submit" class="btn btn-default" {% if route_list[0][-1] == 'disabled' %} disabled {% endif %}>Submit</button>
+            <button type="submit" class="btn btn-default" {% if route_list[0][-1] == 'disabled' %} disabled {% endif %}>提交</button>
           </form>
         {% elif status == 3 %}
           <form action="" method="post" id="time" align='center'>
@@ -142,11 +141,13 @@
               </label>
             </div>
             <hr>
-            <button type="submit" class="btn btn-default">Submit</button>
+            <button type="submit" class="btn btn-default">提交</button>
           </form>
         {% elif status == 4 %}
-          <h4 align='center'>time: {{cur_time}} <h4>
-          <h4 align='center'>starting in {{eta}} later ...</h4>
+          <h3 align='center'  style="color:#FF0000">请勿关闭本页面，并保持网络状态良好，否则将无法抢票！</h3>
+          <br/>
+          <h4 align='center'>当前时间 {{cur_time}} <h4>
+          <h4 align='center'>还需等待 {{eta}} <h4>
           {% if fresh %}
           <meta http-equiv="refresh" content="{{fresh}}">
           {% endif %}
@@ -156,7 +157,6 @@
           {% endif %}
         {% elif status == 6 %}
           <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-          <p align=center>wechat code</p>
           <p align=center>{{wechat}}</p>
           <script src="/jQuery 1.11.1.js" type="text/javascript"></script>
           <script language="javascript" type="text/javascript" src="/jquery.qrcode.min.js"></script>
@@ -240,9 +240,9 @@
           <span aria-hidden="true">&times;</span>
         </button>
         <div class="row">
-          <div class="col-md-1">Code</div>
-          <div class="col-md-6">Description</div>
-          <div class="col-md-3">Advice</div>
+          <div class="col-md-1">错误代码</div>
+          <div class="col-md-6">描述</div>
+          <div class="col-md-3">建议</div>
         </div>
           {% for each in error_list %}
         <div class="row">

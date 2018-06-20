@@ -46,7 +46,7 @@ if __name__ == '__main__':# {{{
     current_time = get_current_time(True).split(' ')[0]
     log_path = os.path.join(ucasbus_cfg.log_path, current_time)
     log = Log(log_path, 100, debug=True)
-    print('[LOG] touch log file %s' % log_path)
+    print('[LOG] log file %s' % log_path)
     if not args.public:
         hash2user['123'] = hash2user[hash_func(users[0])]
         print('[LOG] debuging mode, code 123 are open')
@@ -63,7 +63,7 @@ def login_ucas(eric, data): # {{{
         else:
             path = eric.get_certcode()
             data['certcode_path'] = path
-            data['current'] = 'enter certcode and login in payment'
+            data['current'] = '【登录 UCAS】'
     else:   
         ret, msg, name = auto_recognition_attemps(eric)
         data['msg'] += msg
@@ -72,7 +72,7 @@ def login_ucas(eric, data): # {{{
         else:
             path = eric.get_certcode()
             data['certcode_path'] = path
-            data['current'] = 'enter certcode and login in payment'
+            data['current'] = '【登录 UCAS】'
     return None
 # }}}
     
@@ -85,7 +85,7 @@ def main(username, identifier, page):# {{{
     if 'msg' not in session:
         session['msg'] = []
     if n_page != page:
-        session['msg'] += ['[ERR] no such page id']
+        session['msg'] += ['[ERR] 该页不存在！']
         return redirect('/' + str(n_page))
     
     inform = eric.page[page]
@@ -108,15 +108,12 @@ def main(username, identifier, page):# {{{
     # }}}
 
     if eric._login and not eric.check():
-        data['msg'] += ['[WRN] offline, try to re-login']
+        data['msg'] += ['[WRN] UCAS 远程离线，尝试自动登录！']
         res, logs, names = auto_recognition_attemps(eric)
         data['msg'] += logs
         if res == 0 and names[0] == eric.realname:
-            data['msg'] += ['[SUC] get online']
-            # session['msg'] += data['msg']
-            # return redirect('/' + str(page))
+            pass
         else:
-            data['msg'] += ['[ERR] session may be broken, auto recognition failed! please contact to the admin!']
             eric._login = False
             session['msg'] += data['msg']
             return redirect('/' + str(page))
@@ -141,7 +138,7 @@ def main(username, identifier, page):# {{{
             dates = [get_date_day(i) + [''] for i in range(5)]
             dates[3][2] = 'checked'
             data['dates'] = dates
-            data['current'] = 'select date'
+            data['current'] = '【选择日期】'
     # }}}
     elif status == 2:# {{{
         if request.method == 'POST':
@@ -151,17 +148,15 @@ def main(username, identifier, page):# {{{
             session['msg'] += data['msg']
             return redirect('/' + str(page))
         else:
-            data['current'] = 'select route'
-            data['msg'] += ['[LOG] select date: ' + inform['date'][-1]]
+            data['current'] = '【选择路线】'
+            data['msg'] += ['[LOG]  选择日期: ' + inform['date'][-1]]
             ret, logs, raw = eric.get_route(inform['date'][0], \
                         inform['cache'])
             data['msg'] += logs
             if ret == 0:
                 raw_route_list = raw[0] 
-                route_list = [[route['routecode'], \
-                        'name: {}, time: {}, code: {}'\
-                    .format(route['routename'], route['routetime'],\
-                    route['routecode']), ''] for route in raw_route_list]
+                route_list = [[route['routecode'], route['routename'],\
+                        ''] for route in raw_route_list]
 
                 def mark_favorite(favorites):
                     for favorite in favorites:
@@ -180,8 +175,8 @@ def main(username, identifier, page):# {{{
                         ['玉泉路—雁栖湖18:00', '雁栖湖—玉泉路13:00'])
                 data['route_list'] = route_list
             else:
-                data['route_list'] = [['0', '[ERR] request route list error! payment@ucas may not open', 'disabled']]
-                data['msg'] += ['[ERR] code %d: request route list error! payment@ucas may not open' % ret]
+                data['route_list'] = [['0', '[ERR] 路线查询失败，无法从 UCAS 服务器获取路线。', 'disabled']]
+                data['msg'] += ['[ERR] %d:  路线查询失败，无法从 UCAS 服务器获取路线。' % ret]
                 data['error_list'] = error_list
         
         
@@ -194,7 +189,7 @@ def main(username, identifier, page):# {{{
             inform['msg'] = data['msg']
             return redirect('/' + str(page))
         else:
-            data['current'] = 'choose order time'
+            data['current'] = '【选择抢票时间】'
             def get_next_18_time():
                 cur = (time.time() + 8 * 3600) % 86400 / 3600 
                 return get_date_day(1 if cur >= 18 else 0)
@@ -210,17 +205,17 @@ def main(username, identifier, page):# {{{
                     ' 18:00:00'
 
             current_time = get_current_time()
-            data['s1'] = 'start at ' + current_time + ' current time'
-            data['s2'] = 'start at ' + next_18_time + ' server time'
-            data['msg'] += ['[LOG] select date: ' + inform['date'][-1],\
-                    '[LOG] select route: ' + inform['route'][-1]]
+            data['s1'] = '现在预定 ' + current_time
+            data['s2'] = '预约抢票 ' + next_18_time
+            data['msg'] += ['[LOG] 选择日期: ' + inform['date'][-1],\
+                    '[LOG] 选择路线: ' + inform['route'][-1]]
             inform['ttime'] = None
     # }}}
     elif status == 4:# {{{
         wait = int(inform['wait'])
         if wait == 1:
             cur = time.time() 
-            data['current'] = 'please wait ...'
+            data['current'] = '【等待抢票】'
             if inform['ttime']:
                 res = inform['ttime']
             else:
@@ -232,19 +227,20 @@ def main(username, identifier, page):# {{{
                 inform['attemps'] = 0
                 session['msg'] = data['msg']
                 return redirect('/' + str(page))
-            data['msg'] += ['[LOG] select date: ' + inform['date'][-1],\
-                    '[LOG] select route: ' + inform['route'][-1]]
+            data['msg'] += ['[LOG] 选择日期: ' + inform['date'][-1],\
+                    '[LOG] 选择路线: ' + inform['route'][-1]]
 
             delta = int(res - cur)
-            data['fresh'] = min(max(1, delta//3), np.random.randint(300, 500))
+            data['fresh'] = min(max(1, delta//3),\
+                    np.random.randint(300, 500))
             eta = ''
             if delta > 3600:
-                eta += '%dh '%(delta//3600)
+                eta += '%d小时'%(delta//3600)
                 delta %= 3600
             if delta > 60:
-                eta += '%dm '%(delta//60)
+                eta += '%d分'%(delta//60)
                 delta %= 60
-            eta += '%ds'%delta
+            eta += '%d秒'%delta
             data['cur_time'] = get_current_time()
             data['eta'] = eta
         else:
@@ -255,7 +251,7 @@ def main(username, identifier, page):# {{{
 # }}}
     elif status == 5:# {{{
         inform['attemps'] += 1
-        data['current'] = 'sending order information [%d]...' % \
+        data['current'] = '【正在抢票】第 %d 次...' % \
                 inform['attemps']
         result, msg, raw = eric.buy(inform['route'], inform['date'])
         data['msg'] += msg
@@ -286,17 +282,19 @@ def main(username, identifier, page):# {{{
 
 # }}}
     elif status == 6:# {{{
-        data['current'] = 'succeed'
-        
+        data['current'] = '【成功预约】'
         data['wechat'] = inform['urlcode']
-        data['msg'] += ['[SUC] get QR code successfully!', \
-                '[LOG] please scan the QR code with wechat or open this {} in wechat'.format(inform['urlcode'])]
-        data['msg'] += ['[LOG] select date: ' + inform['date'][-1],\
-                '[LOG] select route: ' + inform['route'][-1]]
+        if len(data['msg']) == 0 and 'suc_history' in inform:
+            data['msg'] = inform['suc_history']
+        else:
+            data['msg'] += [
+                '[SUC] 请扫码支付！'
+            ]
+            inform['suc_history'] = data['msg']
 
 # }}}
     else:# {{{
-        data['msg'] = ['[ERR] no such status', '[WRN] system may have large bugs!']
+        data['msg'] = ['[ERR] 非法状态！请报告管理员！']
 # }}}
     for each in data['msg']:
         log.save(each, session)
@@ -314,12 +312,14 @@ def login(_username=None):# {{{
         eric = user2eric[username]
         if eric.lock:
             return render_template('login.html', \
-                    **{'msg': '[ERR] account locked. contact to admin.', 'news': news})
+                    **{'msg': '[ERR] 该用户处于锁定状态！'\
+                    , 'news': news})
+
         if user_counters[username] == ucasbus_cfg.online_limit \
                 and username != 'admin':
             return render_template('login.html', \
-                    **{'msg': '[ERR] login limit, too many accounts online. contact to admin.', 'news': news})
-
+                    **{'msg': '[ERR] 过多终端在线，限制登录！',\
+                    'news': news})
 
         user_counters[username] += 1
 
@@ -334,9 +334,9 @@ def login(_username=None):# {{{
         page = eric.touch_page()
         return redirect('/' + str(page))
     else:
-        data = {'msg': '[ERR] system is closed!' if not running else (\
-                '[ERR] no such code in data base!' if _username \
-                else '[I N] please enter your code to log in!'),
+        data = {'msg': '[ERR] 系统关闭！' if not running else (\
+                '[ERR] 该用户不存在！' if _username \
+                else '[I N] 请输入密钥登录'),
                 'open': 'disabled' if not running else '', 'news': news}
         return render_template('login.html', **data)
 # }}}
@@ -404,7 +404,7 @@ def restart(page=-1):# {{{
         eric = user2eric[username]
         npage = eric.touch_page(page)
         if npage != page:
-            session['msg'] = ['[ERR] no such page id']
+            session['msg'] = ['[ERR]  该页不存在！']
             return redirect('/' + str(npage))
 
         username = session['username']
@@ -425,7 +425,7 @@ def new_page(page=0):# {{{
         npage = eric.new_page()
         if npage == -1:
             npage = page
-            session['msg'] = ['[ERR] amount of pages reaches limit!']
+            session['msg'] = ['[ERR] 页数过多，无法创建！']
         return redirect('/' + str(npage))
     session.clear()
     return redirect(url_for('index'))
@@ -455,6 +455,17 @@ def del_all_page(username=None, inside=False):# {{{
             return redirect('/' + str(page))
     if not inside:
         return redirect(url_for('index'))
+# }}}
+@app.route('/del_other_page/<int:page>')
+def del_other_page(page):# {{{
+    ret, username, identifier = alive()
+    if ret:
+        eric = user2eric[username]
+        for i in range(len(eric.page)):
+            eric.del_page(i)
+        page = eric.touch_page()
+        return redirect('/' + str(page))
+    return redirect(url_for('index'))
 # }}}
 
 @app.route('/', methods=['GET', 'POST'])
