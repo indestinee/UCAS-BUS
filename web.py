@@ -131,6 +131,7 @@ def main(username, identifier, page):# {{{
             date = request.form['date']
             session['msg'] += data['msg']
             inform['cache'] = True if 'cache' in request.form else False
+            inform['query'] = True if 'query' in request.form else False
             inform['date'] = date.split('|')
             inform['status'] += 1
             return redirect('/' + str(page))
@@ -152,12 +153,23 @@ def main(username, identifier, page):# {{{
             data['msg'] += ['[LOG]  选择日期: ' + inform['date'][-1]]
             ret, logs, raw = eric.get_route(inform['date'][0], \
                         inform['cache'])
+            
             data['msg'] += logs
             if ret == 0:
                 raw_route_list = raw[0] 
                 route_list = [[route['routecode'], route['routename'],\
-                        ''] for route in raw_route_list]
+                        '', ''] for route in raw_route_list]
 
+                if inform['query']:
+                    for each in route_list:
+                        query_data = {
+                            'routecode': each[0],
+                            'bookingdate': inform['date'][0],
+                            'factorycode': 'R001',
+                        }   
+                        remain = eric.query_remain(query_data)
+                        each[-1] = remain
+                
                 def mark_favorite(favorites):
                     for favorite in favorites:
                         for each in route_list:

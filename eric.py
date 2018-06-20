@@ -62,6 +62,15 @@ class Eric(object):
         if not self.realname:
             self.realname = 'Unknown'
         
+    def query_remain(self, data):
+        url = 'http://payment.ucas.ac.cn/NetWorkUI/queryRemainingSeats'
+        response = self.spider.post(url, data)
+        try:
+            return '剩余 %s' % response.json()['returndata']['freeseat']
+        except:
+            return ''
+
+
     def save(self):
         self.user_cache.save(self.page, 'page')
         self.user_cache.save(self.lock, 'lock')

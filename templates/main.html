@@ -108,9 +108,17 @@
             </div>          
             {% endfor %}
             <div class="checkbox">
-              <label>
-                <input type="checkbox" checked name='cache'>使用缓存（加速访问）
-              </label>
+              <div class='row'>
+                <label>
+                  <input type="checkbox" checked name='cache'>使用缓存（加速访问）
+                </label>
+              </div>
+              <div class='row'>
+                <label>
+                  <input type="checkbox" name='query'>查询票数（极其缓慢）
+                </label>
+              </div>
+
             </div>
 
             <hr>
@@ -121,7 +129,7 @@
             {% for route in route_list %}
             <div class="radio">
               <label>
-                <input type="radio" name="route" id="route" value="{{'%s|%s'%(route[0], route[1])}}" {{route[2]}}>{{route[1]}}
+                <input type="radio" name="route" id="route" value="{{'%s|%s'%(route[0], route[1])}}" {{route[2]}}>{{route[1]}} {{route[3]}}
               </label>
             </div>
             {% endfor %}

@@ -1,10 +1,11 @@
-                    Version 0.1
-
+                    Version 0.2
+    
     Hola, mi amigo! Here are some reviews of this Version 0.x:
         1. We have HTTPS now, please access 
             with https://ucasbus.ml for your safety.
         2. Multi-page.
         3. Keep online.
+        4. Query remaining tickets
     Gracias for your support!
-                                                    -- admin
-                                                    2018年05月31日
+                                                        -- admin
+                                                    2018年06月20日
