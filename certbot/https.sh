@@ -1,4 +1,4 @@
-sudo apt install certbot
+sudo apt install certbota -y
 wget https://dl.eff.org/certbot-auto
 chmod a+x certbot-auto
 service nginx stop

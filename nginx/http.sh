@@ -1,4 +1,4 @@
-sudo apt install nginx
+sudo apt install nginx -y
 rm /etc/nginx/nginx.conf
 ln -s `pwd -LP`/nginx_raw.conf /etc/nginx/nginx.conf
 ./profile.sh
