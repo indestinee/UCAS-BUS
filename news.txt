@@ -1,4 +1,4 @@
-                    Version 0.2
+                    Version 0.3
     
     Hola, mi amigo! Here are some reviews of this Version 0.x:
         1. We have HTTPS now, please access 
@@ -8,4 +8,4 @@
         4. Query remaining tickets
     Gracias for your support!
                                                         -- admin
-                                                    2018年06月20日
+                                                    2018年06月28日
